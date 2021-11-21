@@ -1,0 +1,13 @@
+[package]
+name = "asana-tui"
+description = "A terminal user interface for Asana"
+repository = "https://github.com/drewnorman/asana-tui"
+keywords = ["asana", "tui", "cli", "terminal"]
+categories = ["command-line-utilities"]
+version = "0.1.0"
+authors = ["Drew Norman <drew@adre.me>"]
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+clap = "2.33.3"
