@@ -12,3 +12,6 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0.47"
 clap = "2.33.3"
+dirs = "4.0.0"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_yaml = "0.8.21"
