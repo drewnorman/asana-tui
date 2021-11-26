@@ -16,8 +16,8 @@ const AUTHORIZATION_INSTRUCTIONS: &'static [&'static str] = &[
 ];
 
 pub struct Config {
+    pub access_token: Option<String>,
     file_path: Option<PathBuf>,
-    access_token: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
