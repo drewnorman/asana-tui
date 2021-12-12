@@ -15,17 +15,23 @@ const AUTHORIZATION_INSTRUCTIONS: &'static [&'static str] = &[
     "Copy and paste the token into the input below",
 ];
 
+/// Oversees management of configuration file.
+///
 pub struct Config {
     pub access_token: Option<String>,
     file_path: Option<PathBuf>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+/// Define specification for configuration file.
+///
+#[derive(Serialize, Deserialize)]
 struct FileSpec {
     pub access_token: String,
 }
 
 impl Config {
+    /// Return a new empty instance.
+    ///
     pub fn new() -> Config {
         Config {
             file_path: None,
@@ -33,6 +39,11 @@ impl Config {
         }
     }
 
+    /// Try to load an existing configuration from the disk using the custom
+    /// path if provided. If the file cannot be loaded, authorize with the
+    /// user and initialize the configuration file with the new token at the
+    /// default file path or the custom path if provided.
+    ///
     pub fn load(&mut self, custom_path: Option<&str>) -> Result<()> {
         // Use default path unless custom path provided
         let dir_path = match custom_path {
@@ -64,22 +75,24 @@ impl Config {
         Ok(())
     }
 
+    /// Attempt to serialize the configuration data and write it to the disk,
+    /// returning any unrecoverable errors.
+    ///
     fn create_file(&self) -> Result<()> {
-        // Organize and format data
         let data = FileSpec {
             access_token: self.access_token.clone().unwrap(),
         };
         let content = serde_yaml::to_string(&data)?;
-
-        // Create file and write formatted data
         let file_path = self.file_path.as_ref().unwrap();
         let mut file = fs::File::create(file_path)?;
         write!(file, "{}", content)?;
         Ok(())
     }
 
+    /// Print the authorization instructions and return the personal access
+    /// token captured from stdin or an error if reading from stdin failed.
+    ///
     fn authorize_with_user() -> Result<String> {
-        // Print instructions
         println!("\n{}\n", env!("CARGO_PKG_NAME"));
         println!("Authorizing with Asana:\n");
         AUTHORIZATION_INSTRUCTIONS
@@ -90,21 +103,19 @@ impl Config {
             });
         println!();
 
-        // Read token from user
         let mut access_token = String::new();
         print!("Token >> ");
         let _ = io::stdout().flush();
         stdin().read_line(&mut access_token)?;
-
-        // Return sanitized token
         Ok(String::from(access_token.trim()))
     }
 
+    /// Returns the path buffer for the default path to the configuration file
+    /// or an error if the home directory could not be found.
+    ///
     fn default_path() -> Result<PathBuf> {
-        // Try to identify home directory
         match dirs::home_dir() {
             Some(home) => {
-                // Build default path on home directory path
                 let home_path = Path::new(&home);
                 let default_config_path = Path::new(DEFAULT_DIRECTORY_PATH);
                 Ok(home_path.join(default_config_path))
