@@ -13,11 +13,13 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tui::{backend::CrosstermBackend, Terminal};
 
+type NetworkEventSender = std::sync::mpsc::Sender<NetworkEvent>;
+type NetworkEventReceiver = std::sync::mpsc::Receiver<NetworkEvent>;
+
 /// Oversees event processing, state management, and terminal output.
 ///
 pub struct App {
     access_token: String,
-    terminal: Option<Terminal<CrosstermBackend<std::io::Stdout>>>,
     state: Arc<Mutex<State>>,
 }
 
@@ -26,26 +28,22 @@ impl App {
     /// the result of the application execution.
     ///
     pub async fn start(config: Config) -> Result<()> {
-        let access_token = config
-            .access_token
-            .ok_or(anyhow!("Failed to retrieve access token"))?;
-
         let mut app = App {
-            access_token,
-            terminal: None,
+            access_token: config
+                .access_token
+                .ok_or(anyhow!("Failed to retrieve access token"))?,
             state: Arc::new(Mutex::new(State::new())),
         };
 
-        app.start_network()?;
-        app.start_ui().await?;
-
+        let (tx, rx) = std::sync::mpsc::channel::<NetworkEvent>();
+        app.start_network(rx)?;
+        app.start_ui(tx).await?;
         Ok(())
     }
 
     /// Start a separate thread for asynchronous state mutations.
     ///
-    fn start_network(&self) -> Result<()> {
-        let (tx, rx) = std::sync::mpsc::channel::<NetworkEvent>();
+    fn start_network(&self, net_receiver: NetworkEventReceiver) -> Result<()> {
         let cloned_state = Arc::clone(&self.state);
         let access_token = self.access_token.to_owned();
         std::thread::spawn(move || {
@@ -57,39 +55,32 @@ impl App {
                 .block_on(async {
                     let mut network_event_handler =
                         NetworkEventHandler::new(&cloned_state, &access_token);
-                    while let Ok(network_event) = rx.recv() {
+                    while let Ok(network_event) = net_receiver.recv() {
                         network_event_handler.handle(network_event).await;
                     }
                 })
         });
-
-        if let Err(e) = tx.send(NetworkEvent::Me) {
-            println!("Error from dispatch {}", e);
-            // TODO: Handle error
-        };
         Ok(())
     }
 
-    /// Begin the terminal event poll on a separate thread before starting the
+    /// Begin the terminal event poll on a eparate thread before starting the
     /// render loop on the main thread. Return the result following an exit
     /// request or unrecoverable error.
     ///
-    async fn start_ui(&mut self) -> Result<()> {
+    async fn start_ui(&mut self, net_sender: NetworkEventSender) -> Result<()> {
         let mut stdout = stdout();
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         enable_raw_mode()?;
 
         let mut terminal = Terminal::new(CrosstermBackend::new(stdout))?;
         terminal.hide_cursor()?;
-        self.terminal = Some(terminal);
+
+        net_sender.send(NetworkEvent::Me)?;
 
         let terminal_events = TerminalEvents::new();
         loop {
             let state = self.state.lock().await;
-            self.terminal
-                .as_mut()
-                .unwrap()
-                .draw(|frame| crate::render::render(frame, &state))?;
+            terminal.draw(|frame| crate::render::render(frame, &state))?;
             match terminal_events.next()? {
                 TerminalEvent::Input(event) => match event {
                     KeyEvent {
