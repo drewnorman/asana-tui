@@ -11,7 +11,10 @@ use crossterm::{
 use std::io::{self, stdout};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tui::{backend::CrosstermBackend, Terminal};
+use tui::{
+    backend::{Backend, CrosstermBackend},
+    Terminal,
+};
 
 type NetworkEventSender = std::sync::mpsc::Sender<NetworkEvent>;
 type NetworkEventReceiver = std::sync::mpsc::Receiver<NetworkEvent>;
@@ -79,7 +82,10 @@ impl App {
 
         let terminal_events = TerminalEvents::new();
         loop {
-            let state = self.state.lock().await;
+            let mut state = self.state.lock().await;
+            if let Ok(size) = terminal.backend().size() {
+                state.set_terminal_size(size);
+            };
             terminal.draw(|frame| crate::render::render(frame, &state))?;
             match terminal_events.next()? {
                 TerminalEvent::Input(event) => match event {

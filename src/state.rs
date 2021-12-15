@@ -1,4 +1,5 @@
 use crate::asana::{User, Workspace};
+use tui::layout::Rect;
 
 /// Houses data representative of application state.
 ///
@@ -7,6 +8,7 @@ pub struct State {
     user: Option<User>,
     workspaces: Vec<Workspace>,
     active_workspace_gid: Option<String>,
+    terminal_size: Rect,
 }
 
 impl State {
@@ -29,6 +31,8 @@ impl State {
         self
     }
 
+    /// Returns details for current user.
+    ///
     pub fn get_user(&self) -> &Option<User> {
         &self.user
     }
@@ -42,6 +46,13 @@ impl State {
         }
         self.workspaces = workspaces;
         self.active_workspace_gid = Some(self.workspaces[0].gid.to_owned());
+        self
+    }
+
+    /// Sets the terminal size.
+    ///
+    pub fn set_terminal_size(&mut self, size: Rect) -> &mut Self {
+        self.terminal_size = size;
         self
     }
 }
