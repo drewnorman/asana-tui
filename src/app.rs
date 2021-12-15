@@ -32,7 +32,7 @@ impl App {
             access_token: config
                 .access_token
                 .ok_or(anyhow!("Failed to retrieve access token"))?,
-            state: Arc::new(Mutex::new(State::new())),
+            state: Arc::new(Mutex::new(State::default())),
         };
 
         let (tx, rx) = std::sync::mpsc::channel::<NetworkEvent>();

@@ -1,7 +1,6 @@
 use crate::state::State;
 use tui::{
     backend::Backend,
-    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
 };
@@ -26,16 +25,23 @@ fn render_status<B: Backend>(frame: &mut Frame<B>, state: &State) {
     );
     let block = Block::default().title("Status").borders(Borders::ALL);
 
-    let (name, email) = match &state.user.as_ref() {
-        Some(user) => (user.name.as_str(), user.email.as_str()),
-        None => ("", ""),
-    };
+    if state.get_user().is_none() || state.get_active_workspace().is_none() {
+        frame.render_widget(block, size);
+        return;
+    }
 
-    let spans = Spans::from(vec![
-        Span::styled(name, Style::default().fg(Color::Yellow)),
-        Span::raw(" "),
-        Span::styled(format!("<{}>", email,), Style::default().fg(Color::Green)),
-    ]);
-    let paragraph = Paragraph::new(spans).block(block);
+    let user = state.get_user().as_ref().unwrap();
+    let workspace = state.get_active_workspace().unwrap();
+
+    let text = vec![
+        Spans::from(vec![Span::raw(format!(
+            "User: {} <{}>",
+            &user.name, &user.email
+        ))]),
+        Spans::from(vec![Span::raw("Workspace: "), Span::raw(&workspace.name)]),
+    ];
+
+    let paragraph = Paragraph::new(text).block(block);
+
     frame.render_widget(paragraph, size);
 }
