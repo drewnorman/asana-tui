@@ -1,6 +1,8 @@
+use crate::state::State;
+use anyhow::Result;
 use crossterm::{
     event,
-    event::{Event as CrosstermEvent, KeyEvent},
+    event::{Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers},
 };
 use std::{sync::mpsc, thread, time::Duration};
 
@@ -17,15 +19,15 @@ pub enum Event<I> {
 
 /// Specify struct for managing terminal events channel.
 ///
-pub struct Events {
+pub struct Handler {
     rx: mpsc::Receiver<Event<KeyEvent>>,
     _tx: mpsc::Sender<Event<KeyEvent>>,
 }
 
-impl Events {
+impl Handler {
     /// Return new instance after spawning new input polling thread.
     ///
-    pub fn new() -> Events {
+    pub fn new() -> Self {
         let (tx, rx) = mpsc::channel();
         let tx_clone = tx.clone();
         thread::spawn(move || loop {
@@ -37,12 +39,27 @@ impl Events {
             }
             tx_clone.send(Event::Tick).unwrap();
         });
-        Events { rx, _tx: tx }
+        Handler { rx, _tx: tx }
     }
 
-    /// Wait for a value on the events channel.
+    /// Receive next terminal event and handle it accordingly. Returns result
+    /// with value true if should continue or false if exit was requested.
     ///
-    pub fn next(&self) -> Result<Event<crossterm::event::KeyEvent>, mpsc::RecvError> {
-        self.rx.recv()
+    pub fn handle_next(&self, _state: &State) -> Result<bool> {
+        match self.rx.recv()? {
+            Event::Input(event) => match event {
+                KeyEvent {
+                    code: KeyCode::Char('c'),
+                    modifiers: KeyModifiers::CONTROL,
+                }
+                | KeyEvent {
+                    code: KeyCode::Char('q'),
+                    ..
+                } => return Ok(false),
+                _ => (),
+            },
+            Event::Tick => (),
+        }
+        Ok(true)
     }
 }
