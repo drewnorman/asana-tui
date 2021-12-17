@@ -45,7 +45,7 @@ impl Handler {
     /// Receive next terminal event and handle it accordingly. Returns result
     /// with value true if should continue or false if exit was requested.
     ///
-    pub fn handle_next(&self, _state: &State) -> Result<bool> {
+    pub fn handle_next(&self, state: &mut State) -> Result<bool> {
         match self.rx.recv()? {
             Event::Input(event) => match event {
                 KeyEvent {
@@ -58,7 +58,9 @@ impl Handler {
                 } => return Ok(false),
                 _ => (),
             },
-            Event::Tick => (),
+            Event::Tick => {
+                state.advance_spinner_index();
+            }
         }
         Ok(true)
     }

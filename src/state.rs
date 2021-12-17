@@ -9,6 +9,7 @@ pub struct State {
     workspaces: Vec<Workspace>,
     active_workspace_gid: Option<String>,
     terminal_size: Rect,
+    spinner_index: usize,
 }
 
 impl State {
@@ -54,5 +55,21 @@ impl State {
     pub fn set_terminal_size(&mut self, size: Rect) -> &mut Self {
         self.terminal_size = size;
         self
+    }
+
+    /// Advance the spinner index.
+    ///
+    pub fn advance_spinner_index(&mut self) -> &mut Self {
+        self.spinner_index = self.spinner_index + 1;
+        if self.spinner_index >= crate::ui::SPINNER_FRAME_COUNT {
+            self.spinner_index = 0;
+        }
+        self
+    }
+
+    /// Return the current spinner index.
+    ///
+    pub fn get_spinner_index(&self) -> &usize {
+        &self.spinner_index
     }
 }

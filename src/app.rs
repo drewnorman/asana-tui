@@ -87,7 +87,7 @@ impl App {
                 state.set_terminal_size(size);
             };
             terminal.draw(|frame| crate::ui::render::all(frame, &state))?;
-            if !terminal_event_handler.handle_next(&state)? {
+            if !terminal_event_handler.handle_next(&mut state)? {
                 break;
             }
         }
