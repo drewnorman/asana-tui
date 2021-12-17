@@ -86,7 +86,7 @@ impl App {
             if let Ok(size) = terminal.backend().size() {
                 state.set_terminal_size(size);
             };
-            terminal.draw(|frame| crate::render::render(frame, &state))?;
+            terminal.draw(|frame| crate::ui::render::all(frame, &state))?;
             match terminal_events.next()? {
                 TerminalEvent::Input(event) => match event {
                     KeyEvent {

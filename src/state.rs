@@ -33,8 +33,8 @@ impl State {
 
     /// Returns details for current user.
     ///
-    pub fn get_user(&self) -> &Option<User> {
-        &self.user
+    pub fn get_user(&self) -> Option<&User> {
+        self.user.as_ref()
     }
 
     /// Sets workspaces available to current user, initializing the active
