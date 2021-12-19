@@ -1,17 +1,20 @@
 use crate::config::Config;
 use crate::events::network::{Event as NetworkEvent, Handler as NetworkEventHandler};
-use crate::events::terminal::{Event as TerminalEvent, Events as TerminalEvents};
+use crate::events::terminal::Handler as TerminalEventHandler;
 use crate::state::State;
 use anyhow::{anyhow, Result};
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture, KeyCode, KeyEvent, KeyModifiers},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::io::{self, stdout};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tui::{backend::CrosstermBackend, Terminal};
+use tui::{
+    backend::{Backend, CrosstermBackend},
+    Terminal,
+};
 
 type NetworkEventSender = std::sync::mpsc::Sender<NetworkEvent>;
 type NetworkEventReceiver = std::sync::mpsc::Receiver<NetworkEvent>;
@@ -32,7 +35,7 @@ impl App {
             access_token: config
                 .access_token
                 .ok_or(anyhow!("Failed to retrieve access token"))?,
-            state: Arc::new(Mutex::new(State::new())),
+            state: Arc::new(Mutex::new(State::default())),
         };
 
         let (tx, rx) = std::sync::mpsc::channel::<NetworkEvent>();
@@ -63,7 +66,7 @@ impl App {
         Ok(())
     }
 
-    /// Begin the terminal event poll on a eparate thread before starting the
+    /// Begin the terminal event poll on a separate thread before starting the
     /// render loop on the main thread. Return the result following an exit
     /// request or unrecoverable error.
     ///
@@ -77,23 +80,15 @@ impl App {
 
         net_sender.send(NetworkEvent::Me)?;
 
-        let terminal_events = TerminalEvents::new();
+        let terminal_event_handler = TerminalEventHandler::new();
         loop {
-            let state = self.state.lock().await;
-            terminal.draw(|frame| crate::render::render(frame, &state))?;
-            match terminal_events.next()? {
-                TerminalEvent::Input(event) => match event {
-                    KeyEvent {
-                        code: KeyCode::Char('c'),
-                        modifiers: KeyModifiers::CONTROL,
-                    }
-                    | KeyEvent {
-                        code: KeyCode::Char('q'),
-                        ..
-                    } => break,
-                    _ => (),
-                },
-                TerminalEvent::Tick => {}
+            let mut state = self.state.lock().await;
+            if let Ok(size) = terminal.backend().size() {
+                state.set_terminal_size(size);
+            };
+            terminal.draw(|frame| crate::ui::render::all(frame, &state))?;
+            if !terminal_event_handler.handle_next(&mut state)? {
+                break;
             }
         }
 

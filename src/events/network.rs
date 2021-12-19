@@ -29,8 +29,8 @@ impl<'a> Handler<'a> {
             Event::Me => {
                 let (user, workspaces) = self.asana.me().await;
                 let mut state = self.state.lock().await;
-                state.user = Some(user);
-                state.workspaces = workspaces;
+                state.set_user(user);
+                state.set_workspaces(workspaces);
             }
         }
     }
