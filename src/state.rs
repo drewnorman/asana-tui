@@ -70,7 +70,7 @@ impl State {
     /// Advance the spinner index.
     ///
     pub fn advance_spinner_index(&mut self) -> &mut Self {
-        self.spinner_index = self.spinner_index + 1;
+        self.spinner_index += 1;
         if self.spinner_index >= SPINNER_FRAME_COUNT {
             self.spinner_index = 0;
         }

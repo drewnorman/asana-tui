@@ -8,7 +8,7 @@ use std::{
 
 const FILE_NAME: &str = "config.yml";
 const DEFAULT_DIRECTORY_PATH: &str = ".config/asana-tui";
-const AUTHORIZATION_INSTRUCTIONS: &'static [&'static str] = &[
+const AUTHORIZATION_INSTRUCTIONS: &[&str] = &[
     "Visit the Asana Developer App Console at `https://app.asana.com/`",
     "Log in with the account you want to authorize",
     "Create a personal access token",
