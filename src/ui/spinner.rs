@@ -7,7 +7,7 @@ use tui::{
 
 /// Define frames for loading indicator.
 ///
-pub const FRAMES: &'static [&'static str] = &["▁ ▂ ▃", "▁ ▂ ▃", "▂ ▃ ▁", "▂ ▃ ▁", "▃ ▁ ▂", "▃ ▁ ▂"];
+pub const FRAMES: &[&str] = &["▁ ▂ ▃", "▁ ▂ ▃", "▂ ▃ ▁", "▂ ▃ ▁", "▃ ▁ ▂", "▃ ▁ ▂"];
 
 /// Build the spinner widget according to state.
 ///
