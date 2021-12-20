@@ -1,3 +1,4 @@
+use crate::asana::Asana;
 use crate::config::Config;
 use crate::events::network::{Event as NetworkEvent, Handler as NetworkEventHandler};
 use crate::events::terminal::Handler as TerminalEventHandler;
@@ -56,8 +57,9 @@ impl App {
                 .build()
                 .unwrap()
                 .block_on(async {
+                    let mut asana = Asana::new(access_token);
                     let mut network_event_handler =
-                        NetworkEventHandler::new(&cloned_state, &access_token);
+                        NetworkEventHandler::new(&cloned_state, &mut asana);
                     while let Ok(network_event) = net_receiver.recv() {
                         network_event_handler.handle(network_event).await;
                     }
