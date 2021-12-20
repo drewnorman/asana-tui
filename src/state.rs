@@ -50,13 +50,7 @@ impl State {
     /// workspace GID if unset and at least one workspace is available.
     ///
     pub fn set_workspaces(&mut self, workspaces: Vec<Workspace>) -> &mut Self {
-        if workspaces.is_empty() {
-            return self;
-        }
         self.workspaces = workspaces;
-        if self.active_workspace_gid.is_none() {
-            self.active_workspace_gid = Some(self.workspaces[0].gid.to_owned());
-        }
         self
     }
 

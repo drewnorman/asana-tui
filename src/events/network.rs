@@ -30,6 +30,9 @@ impl<'a> Handler<'a> {
                 let (user, workspaces) = self.asana.me().await;
                 let mut state = self.state.lock().await;
                 state.set_user(user);
+                if !workspaces.is_empty() && state.get_active_workspace().is_none() {
+                    state.set_active_workspace(workspaces[0].gid.to_owned());
+                }
                 state.set_workspaces(workspaces);
             }
         }
