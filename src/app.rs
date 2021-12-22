@@ -60,7 +60,10 @@ impl App {
                     let mut network_event_handler =
                         NetworkEventHandler::new(&cloned_state, &mut asana);
                     while let Ok(network_event) = net_receiver.recv() {
-                        network_event_handler.handle(network_event).await;
+                        match network_event_handler.handle(network_event).await {
+                            Ok(_) => (),
+                            Err(e) => panic!("{}", e),
+                        }
                     }
                 })
         });
