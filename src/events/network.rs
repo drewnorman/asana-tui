@@ -1,5 +1,6 @@
 use crate::asana::Asana;
 use crate::state::State;
+use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -25,10 +26,10 @@ impl<'a> Handler<'a> {
 
     /// Handle network events by type.
     ///
-    pub async fn handle(&mut self, event: Event) {
+    pub async fn handle(&mut self, event: Event) -> Result<()> {
         match event {
             Event::Me => {
-                let (user, workspaces) = self.asana.me().await;
+                let (user, workspaces) = self.asana.me().await?;
                 let mut state = self.state.lock().await;
                 state.set_user(user);
                 if !workspaces.is_empty() && state.get_active_workspace().is_none() {
@@ -37,5 +38,6 @@ impl<'a> Handler<'a> {
                 state.set_workspaces(workspaces);
             }
         }
+        Ok(())
     }
 }

@@ -51,13 +51,12 @@ impl App {
         let cloned_state = Arc::clone(&self.state);
         let access_token = self.access_token.to_owned();
         std::thread::spawn(move || {
-            tokio::runtime::Builder::new()
-                .basic_scheduler()
+            tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
                 .unwrap()
                 .block_on(async {
-                    let mut asana = Asana::new(access_token);
+                    let mut asana = Asana::new(&access_token);
                     let mut network_event_handler =
                         NetworkEventHandler::new(&cloned_state, &mut asana);
                     while let Ok(network_event) = net_receiver.recv() {
