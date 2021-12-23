@@ -4,9 +4,9 @@ mod resource;
 
 pub use resource::*;
 
-use client::Client;
 use crate::model;
 use anyhow::Result;
+use client::Client;
 
 /// Responsible for asynchronous interaction with the Asana API including
 /// transformation of response data into explicitly-defined types.
@@ -28,11 +28,11 @@ impl Asana {
     /// they have access.
     ///
     pub async fn me(&mut self) -> Result<(User, Vec<Workspace>)> {
-        model!(WorkspaceModel "workspaces" { name: String }); 
-        model!(UserModel "users" {                            
-            email: String,                                               
-            name: String,                                                
-            workspaces: Vec<WorkspaceModel>,                             
+        model!(WorkspaceModel "workspaces" { name: String });
+        model!(UserModel "users" {
+            email: String,
+            name: String,
+            workspaces: Vec<WorkspaceModel>,
         } WorkspaceModel);
 
         // Make request
@@ -90,7 +90,9 @@ mod tests {
             }));
         }).await;
 
-        let mut asana = Asana { client: Client::new(&token.to_string(), &server.base_url()) };
+        let mut asana = Asana {
+            client: Client::new(&token.to_string(), &server.base_url()),
+        };
         asana.me().await?;
         mock.assert_async().await;
         Ok(())
@@ -99,13 +101,16 @@ mod tests {
     #[tokio::test]
     async fn me_unauthorized() {
         let server = MockServer::start();
-        let mock = server.mock_async(|when, then| {
-            when.method("GET")
-                .path("/users/me");
-            then.status(401);
-        }).await;
+        let mock = server
+            .mock_async(|when, then| {
+                when.method("GET").path("/users/me");
+                then.status(401);
+            })
+            .await;
 
-        let mut asana = Asana { client: Client::new("", &server.base_url()) };
+        let mut asana = Asana {
+            client: Client::new("", &server.base_url()),
+        };
         assert!(asana.me().await.is_err());
         mock.assert_async().await;
     }
