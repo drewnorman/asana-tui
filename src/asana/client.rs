@@ -56,8 +56,8 @@ impl Client {
             "{}{}",
             uri,
             match gid {
-                Some(gid) => format!("{}", gid),
-                None => "".to_string(),
+                Some(gid) => gid.to_owned(),
+                None => String::from(""),
             }
         );
 
