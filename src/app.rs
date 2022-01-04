@@ -9,6 +9,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use log::*;
 use std::io::{self, stdout};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -16,6 +17,7 @@ use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
+use tui_logger::{init_logger, set_default_level};
 
 type NetworkEventSender = std::sync::mpsc::Sender<NetworkEvent>;
 type NetworkEventReceiver = std::sync::mpsc::Receiver<NetworkEvent>;
@@ -32,6 +34,9 @@ impl App {
     /// the result of the application execution.
     ///
     pub async fn start(config: Config) -> Result<()> {
+        init_logger(LevelFilter::Info).unwrap();
+        set_default_level(LevelFilter::Trace);
+
         let mut app = App {
             access_token: config
                 .access_token

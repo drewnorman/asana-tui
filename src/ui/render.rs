@@ -6,6 +6,7 @@ use tui::{
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
 };
+use tui_logger::TuiLoggerWidget;
 
 /// Render all to terminal frame according to state.
 ///
@@ -49,7 +50,20 @@ fn sidebar(frame: &mut Frame, size: Rect, state: &State) {
 ///
 fn main(frame: &mut Frame, size: Rect, _state: &State) {
     let intro_widget = Block::default().borders(Borders::ALL);
-    let log_widget = Block::default().title("Log").borders(Borders::ALL);
+    let log_widget: TuiLoggerWidget = TuiLoggerWidget::default()
+        .block(Block::default().title("Log").borders(Borders::ALL))
+        .style_error(Style::default().fg(Color::Red))
+        .style_warn(Style::default().fg(Color::Yellow))
+        .style_info(Style::default().fg(Color::Cyan))
+        .style_debug(Style::default().fg(Color::Green))
+        .style_trace(Style::default().fg(Color::Magenta))
+        .output_separator(' ')
+        .output_timestamp(Some("%F %H:%M:%S%.3f".to_string()))
+        .output_level(None)
+        .output_target(false)
+        .output_file(false)
+        .output_line(false)
+        .style(Style::default().fg(Color::White).bg(Color::Black));
 
     let rows = Layout::default()
         .direction(Direction::Vertical)
