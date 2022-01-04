@@ -9,6 +9,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use log::*;
 use std::io::{self, stdout};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -16,6 +17,7 @@ use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
+use tui_logger::{init_logger, set_default_level};
 
 type NetworkEventSender = std::sync::mpsc::Sender<NetworkEvent>;
 type NetworkEventReceiver = std::sync::mpsc::Receiver<NetworkEvent>;
@@ -32,6 +34,10 @@ impl App {
     /// the result of the application execution.
     ///
     pub async fn start(config: Config) -> Result<()> {
+        init_logger(LevelFilter::Info).unwrap();
+        set_default_level(LevelFilter::Trace);
+
+        info!("Starting application...");
         let mut app = App {
             access_token: config
                 .access_token
@@ -42,12 +48,15 @@ impl App {
         let (tx, rx) = std::sync::mpsc::channel::<NetworkEvent>();
         app.start_network(rx)?;
         app.start_ui(tx).await?;
+
+        info!("Exiting application...");
         Ok(())
     }
 
     /// Start a separate thread for asynchronous state mutations.
     ///
     fn start_network(&self, net_receiver: NetworkEventReceiver) -> Result<()> {
+        debug!("Creating new thread for asynchronous networking...");
         let cloned_state = Arc::clone(&self.state);
         let access_token = self.access_token.to_owned();
         std::thread::spawn(move || {
@@ -62,7 +71,7 @@ impl App {
                     while let Ok(network_event) = net_receiver.recv() {
                         match network_event_handler.handle(network_event).await {
                             Ok(_) => (),
-                            Err(e) => panic!("{}", e),
+                            Err(e) => error!("Failed to handle network event: {}", e),
                         }
                     }
                 })
@@ -75,6 +84,7 @@ impl App {
     /// request or unrecoverable error.
     ///
     async fn start_ui(&mut self, net_sender: NetworkEventSender) -> Result<()> {
+        debug!("Starting user interface on main thread...");
         let mut stdout = stdout();
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         enable_raw_mode()?;
@@ -92,6 +102,7 @@ impl App {
             };
             terminal.draw(|frame| crate::ui::render::all(frame, &state))?;
             if !terminal_event_handler.handle_next(&mut state)? {
+                debug!("Received application exit request.");
                 break;
             }
         }

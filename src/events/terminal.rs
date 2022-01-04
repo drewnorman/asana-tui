@@ -4,6 +4,7 @@ use crossterm::{
     event,
     event::{Event as CrosstermEvent, KeyCode, KeyEvent, KeyModifiers},
 };
+use log::*;
 use std::{sync::mpsc, thread, time::Duration};
 
 /// Specify terminal event poll rate in milliseconds.
@@ -12,6 +13,7 @@ const TICK_RATE_IN_MS: u64 = 60;
 
 /// Specify different terminal event types.
 ///
+#[derive(Debug)]
 pub enum Event<I> {
     Input(I),
     Tick,
@@ -55,8 +57,13 @@ impl Handler {
                 | KeyEvent {
                     code: KeyCode::Char('q'),
                     ..
-                } => return Ok(false),
-                _ => (),
+                } => {
+                    debug!("Processing exit terminal event '{:?}'...", event);
+                    return Ok(false);
+                }
+                _ => {
+                    debug!("Skipping processing of terminal event '{:?}'...", event);
+                }
             },
             Event::Tick => {
                 state.advance_spinner_index();

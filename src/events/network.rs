@@ -1,11 +1,13 @@
 use crate::asana::Asana;
 use crate::state::State;
 use anyhow::Result;
+use log::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Specify different network event types.
 ///
+#[derive(Debug)]
 pub enum Event {
     Me,
 }
@@ -27,6 +29,7 @@ impl<'a> Handler<'a> {
     /// Handle network events by type.
     ///
     pub async fn handle(&mut self, event: Event) -> Result<()> {
+        debug!("Processing network event '{:?}'...", event);
         match event {
             Event::Me => {
                 let (user, workspaces) = self.asana.me().await?;

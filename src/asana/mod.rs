@@ -7,6 +7,7 @@ pub use resource::*;
 use crate::model;
 use anyhow::Result;
 use client::Client;
+use log::*;
 
 /// Responsible for asynchronous interaction with the Asana API including
 /// transformation of response data into explicitly-defined types.
@@ -19,6 +20,7 @@ impl Asana {
     /// Returns a new instance for the given access token.
     ///
     pub fn new(access_token: &str) -> Asana {
+        info!("Initializing Asana client with personal access token...");
         Asana {
             client: Client::new(access_token, "https://app.asana.com/api/1.0"),
         }
@@ -28,6 +30,8 @@ impl Asana {
     /// they have access.
     ///
     pub async fn me(&mut self) -> Result<(User, Vec<Workspace>)> {
+        info!("Fetching authenticated user details...");
+
         model!(WorkspaceModel "workspaces" { name: String });
         model!(UserModel "users" {
             email: String,
@@ -37,6 +41,7 @@ impl Asana {
 
         // Make request
         let data = self.client.get::<UserModel>("me").await?;
+        info!("Received authenticated user details.");
 
         // Return new user and vector of workspaces
         Ok((
