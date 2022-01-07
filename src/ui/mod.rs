@@ -2,10 +2,9 @@ use tui::backend;
 
 type Frame<'a> = tui::terminal::Frame<'a, backend::CrosstermBackend<std::io::Stdout>>;
 
-pub mod render;
-mod spinner;
-mod status;
+mod render;
+mod widgets;
 
-pub const SPINNER_FRAME_COUNT: usize = spinner::FRAMES.len();
+pub const SPINNER_FRAME_COUNT: usize = widgets::spinner::FRAMES.len();
 
-use status::status;
+pub use render::render;

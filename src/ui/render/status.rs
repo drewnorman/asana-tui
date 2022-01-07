@@ -1,4 +1,4 @@
-use super::spinner;
+use super::widgets::spinner;
 use super::Frame;
 use crate::state::State;
 use tui::{
