@@ -61,6 +61,20 @@ impl Handler {
                     debug!("Processing exit terminal event '{:?}'...", event);
                     return Ok(false);
                 }
+                KeyEvent {
+                    code: KeyCode::Char('h'),
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    debug!("Processing previous menu event '{:?}'...", event);
+                    state.previous_menu();
+                }
+                KeyEvent {
+                    code: KeyCode::Char('l'),
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    debug!("Processing next menu event '{:?}'...", event);
+                    state.next_menu();
+                }
                 _ => {
                     debug!("Skipping processing of terminal event '{:?}'...", event);
                 }
