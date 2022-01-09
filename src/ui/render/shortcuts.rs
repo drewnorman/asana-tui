@@ -1,13 +1,25 @@
 use super::Frame;
-use crate::state::State;
+use crate::state::{CurrentMenu, State};
+use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
+    text::Span,
     widgets::{Block, Borders},
 };
 
+const BLOCK_TITLE: &str = "Shortcuts";
+
 /// Render shortcuts widget according to state.
 ///
-pub fn shortcuts(frame: &mut Frame, size: Rect, _state: &State) {
-    let shortcuts_widget = Block::default().title("Shortcuts").borders(Borders::ALL);
-    frame.render_widget(shortcuts_widget, size);
+pub fn shortcuts(frame: &mut Frame, size: Rect, state: &State) {
+    let mut block = Block::default().title(BLOCK_TITLE).borders(Borders::ALL);
+    if *state.current_menu() == CurrentMenu::Shortcuts {
+        block = block
+            .border_style(styling::active_block_border_style())
+            .title(Span::styled(
+                BLOCK_TITLE,
+                styling::active_block_title_style(),
+            ));
+    }
+    frame.render_widget(block, size);
 }
