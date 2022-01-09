@@ -2,15 +2,39 @@ use crate::asana::{User, Workspace};
 use crate::ui::SPINNER_FRAME_COUNT;
 use tui::layout::Rect;
 
+/// Tracks the currently-selected block.
+///
+#[derive(Debug, PartialEq, Eq)]
+pub enum CurrentMenu {
+    Status,
+    Shortcuts,
+    TopList,
+}
+
 /// Houses data representative of application state.
 ///
-#[derive(Default)]
 pub struct State {
     user: Option<User>,
     workspaces: Vec<Workspace>,
     active_workspace_gid: Option<String>,
     terminal_size: Rect,
     spinner_index: usize,
+    current_menu: CurrentMenu,
+}
+
+/// Defines default application state.
+///
+impl Default for State {
+    fn default() -> State {
+        State {
+            user: None,
+            workspaces: vec![],
+            active_workspace_gid: None,
+            terminal_size: Rect::default(),
+            spinner_index: 0,
+            current_menu: CurrentMenu::Shortcuts,
+        }
+    }
 }
 
 impl State {
@@ -75,6 +99,34 @@ impl State {
     ///
     pub fn get_spinner_index(&self) -> &usize {
         &self.spinner_index
+    }
+
+    /// Return the current menu.
+    ///
+    pub fn current_menu(&self) -> &CurrentMenu {
+        &self.current_menu
+    }
+
+    /// Activate the next menu.
+    ///
+    pub fn next_menu(&mut self) -> &mut Self {
+        match self.current_menu {
+            CurrentMenu::Status => self.current_menu = CurrentMenu::Shortcuts,
+            CurrentMenu::Shortcuts => self.current_menu = CurrentMenu::TopList,
+            CurrentMenu::TopList => self.current_menu = CurrentMenu::Status,
+        }
+        self
+    }
+
+    /// Activate the previous menu.
+    ///
+    pub fn previous_menu(&mut self) -> &mut Self {
+        match self.current_menu {
+            CurrentMenu::Status => self.current_menu = CurrentMenu::TopList,
+            CurrentMenu::Shortcuts => self.current_menu = CurrentMenu::Status,
+            CurrentMenu::TopList => self.current_menu = CurrentMenu::Shortcuts,
+        }
+        self
     }
 }
 
@@ -168,5 +220,42 @@ mod tests {
             ..State::default()
         };
         assert_eq!(*state.get_spinner_index(), 2);
+    }
+
+    #[test]
+    fn current_menu() {
+        let state = State {
+            current_menu: CurrentMenu::Status,
+            ..State::default()
+        };
+        assert_eq!(*state.current_menu(), CurrentMenu::Status);
+    }
+
+    #[test]
+    fn next_menu() {
+        let mut state = State {
+            current_menu: CurrentMenu::Status,
+            ..State::default()
+        };
+        state.next_menu();
+        assert_eq!(state.current_menu, CurrentMenu::Shortcuts);
+        state.next_menu();
+        assert_eq!(state.current_menu, CurrentMenu::TopList);
+        state.next_menu();
+        assert_eq!(state.current_menu, CurrentMenu::Status);
+    }
+
+    #[test]
+    fn previous_menu() {
+        let mut state = State {
+            current_menu: CurrentMenu::Status,
+            ..State::default()
+        };
+        state.previous_menu();
+        assert_eq!(state.current_menu, CurrentMenu::TopList);
+        state.previous_menu();
+        assert_eq!(state.current_menu, CurrentMenu::Shortcuts);
+        state.previous_menu();
+        assert_eq!(state.current_menu, CurrentMenu::Status);
     }
 }
