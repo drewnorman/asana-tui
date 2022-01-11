@@ -13,3 +13,15 @@ pub fn active_block_border_style() -> Style {
 pub fn active_block_title_style() -> Style {
     Style::default().add_modifier(Modifier::BOLD)
 }
+
+/// Return the style for current list items.
+///
+pub fn current_list_item_style() -> Style {
+    Style::default().add_modifier(Modifier::BOLD)
+}
+
+/// Return the style for active list items.
+///
+pub fn active_list_item_style() -> Style {
+    current_list_item_style().fg(ASANA_PURPLE)
+}
