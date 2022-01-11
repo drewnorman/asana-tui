@@ -27,7 +27,7 @@ fn left(frame: &mut Frame, size: Rect, state: &State) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(4),
-            Constraint::Length(12),
+            Constraint::Length(8),
             Constraint::Min(1),
         ])
         .split(size);
