@@ -2,13 +2,25 @@ use crate::asana::{User, Workspace};
 use crate::ui::SPINNER_FRAME_COUNT;
 use tui::layout::Rect;
 
-/// Tracks the currently-selected block.
+/// Tracks the currently-selected menu.
 ///
 #[derive(Debug, PartialEq, Eq)]
 pub enum CurrentMenu {
     Status,
     Shortcuts,
     TopList,
+}
+
+/// Tracks the currently-selected shortcut.
+///
+#[derive(Debug, PartialEq, Eq)]
+pub enum CurrentShortcut {
+    MyTasks,
+    DueSoon,
+    PastDue,
+    RecentlyCreated,
+    RecentlyEdited,
+    RecentlyCompleted,
 }
 
 /// Houses data representative of application state.
@@ -20,6 +32,7 @@ pub struct State {
     terminal_size: Rect,
     spinner_index: usize,
     current_menu: CurrentMenu,
+    current_shortcut: CurrentShortcut,
 }
 
 /// Defines default application state.
@@ -33,6 +46,7 @@ impl Default for State {
             terminal_size: Rect::default(),
             spinner_index: 0,
             current_menu: CurrentMenu::Shortcuts,
+            current_shortcut: CurrentShortcut::MyTasks,
         }
     }
 }
@@ -125,6 +139,48 @@ impl State {
             CurrentMenu::Status => self.current_menu = CurrentMenu::TopList,
             CurrentMenu::Shortcuts => self.current_menu = CurrentMenu::Status,
             CurrentMenu::TopList => self.current_menu = CurrentMenu::Shortcuts,
+        }
+        self
+    }
+
+    /// Return the current shortcut.
+    ///
+    pub fn current_shortcut(&self) -> &CurrentShortcut {
+        &self.current_shortcut
+    }
+
+    /// Activate the next shortcut.
+    ///
+    pub fn next_shortcut(&mut self) -> &mut Self {
+        match self.current_shortcut {
+            CurrentShortcut::MyTasks => self.current_shortcut = CurrentShortcut::DueSoon,
+            CurrentShortcut::DueSoon => self.current_shortcut = CurrentShortcut::PastDue,
+            CurrentShortcut::PastDue => self.current_shortcut = CurrentShortcut::RecentlyCreated,
+            CurrentShortcut::RecentlyCreated => {
+                self.current_shortcut = CurrentShortcut::RecentlyEdited
+            }
+            CurrentShortcut::RecentlyEdited => {
+                self.current_shortcut = CurrentShortcut::RecentlyCompleted
+            }
+            CurrentShortcut::RecentlyCompleted => self.current_shortcut = CurrentShortcut::MyTasks,
+        }
+        self
+    }
+
+    /// Activate the previous shortcut.
+    ///
+    pub fn previous_shortcut(&mut self) -> &mut Self {
+        match self.current_shortcut {
+            CurrentShortcut::MyTasks => self.current_shortcut = CurrentShortcut::RecentlyCompleted,
+            CurrentShortcut::RecentlyCompleted => {
+                self.current_shortcut = CurrentShortcut::RecentlyEdited
+            }
+            CurrentShortcut::RecentlyEdited => {
+                self.current_shortcut = CurrentShortcut::RecentlyCreated
+            }
+            CurrentShortcut::RecentlyCreated => self.current_shortcut = CurrentShortcut::PastDue,
+            CurrentShortcut::PastDue => self.current_shortcut = CurrentShortcut::DueSoon,
+            CurrentShortcut::DueSoon => self.current_shortcut = CurrentShortcut::MyTasks,
         }
         self
     }
@@ -257,5 +313,54 @@ mod tests {
         assert_eq!(state.current_menu, CurrentMenu::Shortcuts);
         state.previous_menu();
         assert_eq!(state.current_menu, CurrentMenu::Status);
+    }
+
+    #[test]
+    fn current_shortcut() {
+        let state = State {
+            current_shortcut: CurrentShortcut::MyTasks,
+            ..State::default()
+        };
+        assert_eq!(*state.current_shortcut(), CurrentShortcut::MyTasks);
+    }
+
+    #[test]
+    fn next_shortcut() {
+        let mut state = State {
+            current_shortcut: CurrentShortcut::MyTasks,
+            ..State::default()
+        };
+        state.next_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::DueSoon);
+        state.next_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::PastDue);
+        state.next_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::RecentlyCreated);
+        state.next_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::RecentlyEdited);
+        state.next_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::RecentlyCompleted);
+        state.next_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::MyTasks);
+    }
+
+    #[test]
+    fn previous_shortcut() {
+        let mut state = State {
+            current_shortcut: CurrentShortcut::MyTasks,
+            ..State::default()
+        };
+        state.previous_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::RecentlyCompleted);
+        state.previous_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::RecentlyEdited);
+        state.previous_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::RecentlyCreated);
+        state.previous_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::PastDue);
+        state.previous_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::DueSoon);
+        state.previous_shortcut();
+        assert_eq!(state.current_shortcut, CurrentShortcut::MyTasks);
     }
 }
