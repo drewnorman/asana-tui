@@ -1,5 +1,5 @@
 use super::Frame;
-use crate::state::{CurrentMenu, CurrentShortcut, State};
+use crate::state::{Menu, Shortcut, State};
 use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
@@ -23,7 +23,7 @@ pub fn shortcuts(frame: &mut Frame, size: Rect, state: &State) {
     let mut recently_completed_style = Style::default();
 
     let mut list_item_style = styling::current_list_item_style();
-    if *state.current_menu() == CurrentMenu::Shortcuts {
+    if *state.current_menu() == Menu::Shortcuts {
         block = block
             .border_style(styling::active_block_border_style())
             .title(Span::styled(
@@ -34,22 +34,22 @@ pub fn shortcuts(frame: &mut Frame, size: Rect, state: &State) {
     }
 
     match state.current_shortcut() {
-        CurrentShortcut::MyTasks => {
+        Shortcut::MyTasks => {
             my_tasks_style = list_item_style;
         }
-        CurrentShortcut::DueSoon => {
+        Shortcut::DueSoon => {
             due_soon_style = list_item_style;
         }
-        CurrentShortcut::PastDue => {
+        Shortcut::PastDue => {
             past_due_style = list_item_style;
         }
-        CurrentShortcut::RecentlyCreated => {
+        Shortcut::RecentlyCreated => {
             recently_created_style = list_item_style;
         }
-        CurrentShortcut::RecentlyEdited => {
+        Shortcut::RecentlyEdited => {
             recently_edited_style = list_item_style;
         }
-        CurrentShortcut::RecentlyCompleted => {
+        Shortcut::RecentlyCompleted => {
             recently_completed_style = list_item_style;
         }
     };
