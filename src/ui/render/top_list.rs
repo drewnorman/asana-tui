@@ -1,5 +1,5 @@
 use super::Frame;
-use crate::state::{CurrentMenu, State};
+use crate::state::{Menu, State};
 use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
@@ -13,7 +13,7 @@ const BLOCK_TITLE: &str = "Projects";
 ///
 pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
     let mut block = Block::default().title(BLOCK_TITLE).borders(Borders::ALL);
-    if *state.current_menu() == CurrentMenu::TopList {
+    if *state.current_menu() == Menu::TopList {
         block = block
             .border_style(styling::active_block_border_style())
             .title(Span::styled(
