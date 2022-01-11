@@ -1,4 +1,4 @@
-use crate::state::State;
+use crate::state::{CurrentMenu, State};
 use anyhow::Result;
 use crossterm::{
     event,
@@ -74,6 +74,32 @@ impl Handler {
                 } => {
                     debug!("Processing next menu event '{:?}'...", event);
                     state.next_menu();
+                }
+                KeyEvent {
+                    code: KeyCode::Char('k'),
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    debug!("Processing previous menu item event '{:?}'...", event);
+                    match state.current_menu() {
+                        CurrentMenu::Status => (),
+                        CurrentMenu::Shortcuts => {
+                            state.previous_shortcut();
+                        }
+                        CurrentMenu::TopList => (),
+                    }
+                }
+                KeyEvent {
+                    code: KeyCode::Char('j'),
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    debug!("Processing next menu item event '{:?}'...", event);
+                    match state.current_menu() {
+                        CurrentMenu::Status => (),
+                        CurrentMenu::Shortcuts => {
+                            state.next_shortcut();
+                        }
+                        CurrentMenu::TopList => (),
+                    }
                 }
                 _ => {
                     debug!("Skipping processing of terminal event '{:?}'...", event);
