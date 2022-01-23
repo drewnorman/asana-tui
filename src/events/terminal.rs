@@ -1,4 +1,4 @@
-use crate::state::{Menu, State};
+use crate::state::{Focus, Menu, State};
 use anyhow::Result;
 use crossterm::{
     event,
@@ -62,45 +62,82 @@ impl Handler {
                     return Ok(false);
                 }
                 KeyEvent {
-                    code: KeyCode::Char('h'),
+                    code: KeyCode::Esc,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    debug!("Processing previous menu event '{:?}'...", event);
-                    state.previous_menu();
+                    if *state.current_focus() == Focus::View {
+                        debug!("Processing view cancel terminal event '{:?}'...", event);
+                        state.focus_menu();
+                    }
                 }
+                KeyEvent {
+                    code: KeyCode::Char('h'),
+                    modifiers: KeyModifiers::NONE,
+                } => match state.current_focus() {
+                    Focus::Menu => {
+                        debug!("Processing previous menu event '{:?}'...", event);
+                        state.previous_menu();
+                    }
+                    Focus::View => {}
+                },
                 KeyEvent {
                     code: KeyCode::Char('l'),
                     modifiers: KeyModifiers::NONE,
-                } => {
-                    debug!("Processing next menu event '{:?}'...", event);
-                    state.next_menu();
-                }
+                } => match state.current_focus() {
+                    Focus::Menu => {
+                        debug!("Processing next menu event '{:?}'...", event);
+                        state.next_menu();
+                    }
+                    Focus::View => {}
+                },
                 KeyEvent {
                     code: KeyCode::Char('k'),
                     modifiers: KeyModifiers::NONE,
-                } => {
-                    debug!("Processing previous menu item event '{:?}'...", event);
-                    match state.current_menu() {
-                        Menu::Status => (),
-                        Menu::Shortcuts => {
-                            state.previous_shortcut();
+                } => match state.current_focus() {
+                    Focus::Menu => {
+                        debug!("Processing previous menu item event '{:?}'...", event);
+                        match state.current_menu() {
+                            Menu::Status => (),
+                            Menu::Shortcuts => {
+                                state.previous_shortcut();
+                            }
+                            Menu::TopList => (),
                         }
-                        Menu::TopList => (),
                     }
-                }
+                    Focus::View => {}
+                },
                 KeyEvent {
                     code: KeyCode::Char('j'),
                     modifiers: KeyModifiers::NONE,
-                } => {
-                    debug!("Processing next menu item event '{:?}'...", event);
-                    match state.current_menu() {
-                        Menu::Status => (),
-                        Menu::Shortcuts => {
-                            state.next_shortcut();
+                } => match state.current_focus() {
+                    Focus::Menu => {
+                        debug!("Processing next menu item event '{:?}'...", event);
+                        match state.current_menu() {
+                            Menu::Status => (),
+                            Menu::Shortcuts => {
+                                state.next_shortcut();
+                            }
+                            Menu::TopList => (),
                         }
-                        Menu::TopList => (),
                     }
-                }
+                    Focus::View => {}
+                },
+                KeyEvent {
+                    code: KeyCode::Enter,
+                    modifiers: KeyModifiers::NONE,
+                } => match state.current_focus() {
+                    Focus::Menu => {
+                        debug!("Processing select menu item event '{:?}'...", event);
+                        match state.current_menu() {
+                            Menu::Status => (),
+                            Menu::Shortcuts => {
+                                state.select_current_shortcut();
+                            }
+                            Menu::TopList => (),
+                        }
+                    }
+                    Focus::View => {}
+                },
                 _ => {
                     debug!("Skipping processing of terminal event '{:?}'...", event);
                 }
