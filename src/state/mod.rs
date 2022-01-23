@@ -1,6 +1,17 @@
+mod view;
+
 use crate::asana::{User, Workspace};
+use crate::state::view::View;
 use crate::ui::SPINNER_FRAME_COUNT;
 use tui::layout::Rect;
+
+/// Specifying the different foci.
+///
+#[derive(Debug, PartialEq, Eq)]
+pub enum Focus {
+    Menu,
+    View,
+}
 
 /// Specifying the different menus.
 ///
@@ -31,8 +42,10 @@ pub struct State {
     active_workspace_gid: Option<String>,
     terminal_size: Rect,
     spinner_index: usize,
+    current_focus: Focus,
     current_menu: Menu,
     current_shortcut: Shortcut,
+    view_stack: Vec<View>,
 }
 
 /// Defines default application state.
@@ -45,8 +58,10 @@ impl Default for State {
             active_workspace_gid: None,
             terminal_size: Rect::default(),
             spinner_index: 0,
+            current_focus: Focus::Menu,
             current_menu: Menu::Shortcuts,
             current_shortcut: Shortcut::MyTasks,
+            view_stack: vec![view::welcome()],
         }
     }
 }
@@ -115,6 +130,26 @@ impl State {
         &self.spinner_index
     }
 
+    /// Return the current focus.
+    ///
+    pub fn current_focus(&self) -> &Focus {
+        &self.current_focus
+    }
+
+    /// Change focus to the current menu.
+    ///
+    pub fn focus_menu(&mut self) -> &mut Self {
+        self.current_focus = Focus::Menu;
+        self
+    }
+
+    /// Change focus to the current view.
+    ///
+    pub fn focus_view(&mut self) -> &mut Self {
+        self.current_focus = Focus::View;
+        self
+    }
+
     /// Return the current menu.
     ///
     pub fn current_menu(&self) -> &Menu {
@@ -175,6 +210,27 @@ impl State {
             Shortcut::DueSoon => self.current_shortcut = Shortcut::MyTasks,
         }
         self
+    }
+
+    /// Select the current shortcut.
+    ///
+    pub fn select_current_shortcut(&mut self) -> &mut Self {
+        self.view_stack.clear();
+        match self.current_shortcut {
+            Shortcut::MyTasks => self.view_stack.push(view::my_tasks()),
+            Shortcut::DueSoon => self.view_stack.push(view::due_soon()),
+            Shortcut::PastDue => self.view_stack.push(view::past_due()),
+            Shortcut::RecentlyCreated => self.view_stack.push(view::recently_created()),
+            Shortcut::RecentlyEdited => self.view_stack.push(view::recently_edited()),
+            Shortcut::RecentlyCompleted => self.view_stack.push(view::recently_completed()),
+        }
+        self.focus_view();
+        self
+    }
+
+    /// Return the current view.
+    pub fn current_view(&self) -> &View {
+        self.view_stack.last().unwrap()
     }
 }
 
@@ -271,6 +327,37 @@ mod tests {
     }
 
     #[test]
+    fn current_focus() {
+        let mut state = State {
+            current_focus: Focus::Menu,
+            ..State::default()
+        };
+        assert_eq!(*state.current_focus(), Focus::Menu);
+        state.current_focus = Focus::View;
+        assert_eq!(*state.current_focus(), Focus::View);
+    }
+
+    #[test]
+    fn focus_menu() {
+        let mut state = State {
+            current_focus: Focus::View,
+            ..State::default()
+        };
+        state.focus_menu();
+        assert_eq!(state.current_focus, Focus::Menu);
+    }
+
+    #[test]
+    fn focus_view() {
+        let mut state = State {
+            current_focus: Focus::Menu,
+            ..State::default()
+        };
+        state.focus_view();
+        assert_eq!(state.current_focus, Focus::View);
+    }
+
+    #[test]
     fn current_menu() {
         let state = State {
             current_menu: Menu::Status,
@@ -354,5 +441,32 @@ mod tests {
         assert_eq!(state.current_shortcut, Shortcut::DueSoon);
         state.previous_shortcut();
         assert_eq!(state.current_shortcut, Shortcut::MyTasks);
+    }
+
+    #[test]
+    fn select_current_shortcut() {
+        let mut state = State {
+            current_shortcut: Shortcut::MyTasks,
+            current_focus: Focus::Menu,
+            ..State::default()
+        };
+        state.select_current_shortcut();
+        assert_eq!(*state.view_stack.last().unwrap(), view::my_tasks());
+        assert_eq!(state.current_focus, Focus::View);
+        state.current_shortcut = Shortcut::PastDue;
+        state.select_current_shortcut();
+        assert_eq!(*state.view_stack.last().unwrap(), view::past_due());
+        assert_eq!(state.current_focus, Focus::View);
+    }
+
+    #[test]
+    fn current_view() {
+        let mut state = State {
+            view_stack: vec![view::due_soon()],
+            ..State::default()
+        };
+        assert_eq!(*state.current_view(), view::due_soon());
+        state.view_stack = vec![view::recently_completed()];
+        assert_eq!(*state.current_view(), view::recently_completed());
     }
 }

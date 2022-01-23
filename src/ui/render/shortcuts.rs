@@ -1,5 +1,5 @@
 use super::Frame;
-use crate::state::{Menu, Shortcut, State};
+use crate::state::{Focus, Menu, Shortcut, State};
 use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
@@ -23,7 +23,7 @@ pub fn shortcuts(frame: &mut Frame, size: Rect, state: &State) {
     let mut recently_completed_style = Style::default();
 
     let mut list_item_style = styling::current_list_item_style();
-    if *state.current_menu() == Menu::Shortcuts {
+    if *state.current_focus() == Focus::Menu && *state.current_menu() == Menu::Shortcuts {
         block = block
             .border_style(styling::active_block_border_style())
             .title(Span::styled(
