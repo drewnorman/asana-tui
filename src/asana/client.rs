@@ -26,15 +26,23 @@ impl Client {
     /// Return model data for entity with GID or error.
     ///
     pub async fn get<T: Model>(&mut self, gid: &str) -> Result<T> {
-        let model: Wrapper<T> = self.call::<T>(Method::GET, Some(gid)).await?.json().await?;
+        let model: Wrapper<T> = self
+            .call::<T>(Method::GET, Some(gid), None)
+            .await?
+            .json()
+            .await?;
         Ok(model.data)
     }
 
     /// Return vector of model data or error.
     ///
     #[allow(dead_code)]
-    pub async fn list<T: Model>(&mut self) -> Result<Vec<T>> {
-        let model: ListWrapper<T> = self.call::<T>(Method::GET, None).await?.json().await?;
+    pub async fn list<T: Model>(&mut self, params: Option<Vec<(&str, &str)>>) -> Result<Vec<T>> {
+        let model: ListWrapper<T> = self
+            .call::<T>(Method::GET, None, params)
+            .await?
+            .json()
+            .await?;
         self.endpoint.clear();
         Ok(model.data)
     }
@@ -49,7 +57,12 @@ impl Client {
 
     /// Make request and return response with model data or error.
     ///
-    async fn call<T: Model>(&mut self, method: Method, gid: Option<&str>) -> Result<Response> {
+    async fn call<T: Model>(
+        &mut self,
+        method: Method,
+        gid: Option<&str>,
+        params: Option<Vec<(&str, &str)>>,
+    ) -> Result<Response> {
         // Add both relational and main endpoints, and entity gid if supplied
         let uri = format!("{}{}/", self.endpoint, T::endpoint());
         let uri = format!(
@@ -70,7 +83,12 @@ impl Client {
             T::field_names().join("|"),
             T::opt_strings().join(",")
         );
-        let uri = format!("{}?opt_fields={}", uri, opts);
+        let mut uri = format!("{}?opt_fields={}", uri, opts);
+        if let Some(params) = params {
+            for param in params.iter() {
+                uri = format!("{}&{}={}", uri, param.0, param.1);
+            }
+        }
         let request_url = format!("{}/{}", &self.base_url, uri);
 
         // Make request
