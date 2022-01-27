@@ -16,3 +16,11 @@ pub struct Workspace {
     pub gid: String,
     pub name: String,
 }
+
+/// Defines task data structure.
+///
+#[derive(Clone, Debug, Dummy, PartialEq)]
+pub struct Task {
+    pub gid: String,
+    pub name: String,
+}
