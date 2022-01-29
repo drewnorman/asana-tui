@@ -1,6 +1,6 @@
 use super::widgets::spinner;
 use super::Frame;
-use crate::state::{Menu, State};
+use crate::state::{Focus, Menu, State};
 use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
@@ -28,10 +28,26 @@ pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
         return;
     }
 
+    let list_item_style;
+    if *state.current_focus() == Focus::Menu && *state.current_menu() == Menu::TopList {
+        list_item_style = styling::active_list_item_style();
+    } else {
+        list_item_style = styling::current_list_item_style();
+    }
+
     let items: Vec<Spans> = state
         .get_projects()
         .iter()
-        .map(|p| Spans::from(vec![Span::raw(p.name.to_owned())]))
+        .enumerate()
+        .map(|(i, p)| {
+            let span;
+            if i == *state.current_top_list_item() {
+                span = Span::styled(p.name.to_owned(), list_item_style);
+            } else {
+                span = Span::raw(p.name.to_owned());
+            }
+            Spans::from(vec![span])
+        })
         .collect();
     let list = Paragraph::new(items)
         .style(styling::normal_list_item_style())
