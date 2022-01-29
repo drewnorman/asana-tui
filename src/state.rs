@@ -1,8 +1,8 @@
-mod view;
-
-use crate::asana::{User, Workspace};
-use crate::state::view::View;
+use crate::app::NetworkEventSender;
+use crate::asana::{Task, User, Workspace};
+use crate::events::network::Event as NetworkEvent;
 use crate::ui::SPINNER_FRAME_COUNT;
+use log::*;
 use tui::layout::Rect;
 
 /// Specifying the different foci.
@@ -22,6 +22,19 @@ pub enum Menu {
     TopList,
 }
 
+/// Specifying the different views.
+///
+#[derive(Debug, PartialEq, Eq)]
+pub enum View {
+    Welcome,
+    MyTasks,
+    DueSoon,
+    PastDue,
+    RecentlyCreated,
+    RecentlyEdited,
+    RecentlyCompleted,
+}
+
 /// Specifying the different shortcuts.
 ///
 #[derive(Debug, PartialEq, Eq)]
@@ -37,6 +50,7 @@ pub enum Shortcut {
 /// Houses data representative of application state.
 ///
 pub struct State {
+    net_sender: Option<NetworkEventSender>,
     user: Option<User>,
     workspaces: Vec<Workspace>,
     active_workspace_gid: Option<String>,
@@ -46,6 +60,7 @@ pub struct State {
     current_menu: Menu,
     current_shortcut: Shortcut,
     view_stack: Vec<View>,
+    tasks: Vec<Task>,
 }
 
 /// Defines default application state.
@@ -53,6 +68,7 @@ pub struct State {
 impl Default for State {
     fn default() -> State {
         State {
+            net_sender: None,
             user: None,
             workspaces: vec![],
             active_workspace_gid: None,
@@ -61,12 +77,20 @@ impl Default for State {
             current_focus: Focus::Menu,
             current_menu: Menu::Shortcuts,
             current_shortcut: Shortcut::MyTasks,
-            view_stack: vec![view::welcome()],
+            view_stack: vec![View::Welcome],
+            tasks: vec![],
         }
     }
 }
 
 impl State {
+    pub fn new(net_sender: NetworkEventSender) -> Self {
+        State {
+            net_sender: Some(net_sender),
+            ..State::default()
+        }
+    }
+
     /// Returns details for current user.
     ///
     pub fn get_user(&self) -> Option<&User> {
@@ -217,20 +241,58 @@ impl State {
     pub fn select_current_shortcut(&mut self) -> &mut Self {
         self.view_stack.clear();
         match self.current_shortcut {
-            Shortcut::MyTasks => self.view_stack.push(view::my_tasks()),
-            Shortcut::DueSoon => self.view_stack.push(view::due_soon()),
-            Shortcut::PastDue => self.view_stack.push(view::past_due()),
-            Shortcut::RecentlyCreated => self.view_stack.push(view::recently_created()),
-            Shortcut::RecentlyEdited => self.view_stack.push(view::recently_edited()),
-            Shortcut::RecentlyCompleted => self.view_stack.push(view::recently_completed()),
+            Shortcut::MyTasks => {
+                self.tasks.clear();
+                self.dispatch(NetworkEvent::MyTasks);
+                self.view_stack.push(View::MyTasks);
+            }
+            Shortcut::DueSoon => {
+                self.view_stack.push(View::DueSoon);
+            }
+            Shortcut::PastDue => {
+                self.view_stack.push(View::PastDue);
+            }
+            Shortcut::RecentlyCreated => {
+                self.view_stack.push(View::RecentlyCreated);
+            }
+            Shortcut::RecentlyEdited => {
+                self.view_stack.push(View::RecentlyEdited);
+            }
+            Shortcut::RecentlyCompleted => {
+                self.view_stack.push(View::RecentlyCompleted);
+            }
         }
         self.focus_view();
         self
     }
 
     /// Return the current view.
+    ///
     pub fn current_view(&self) -> &View {
         self.view_stack.last().unwrap()
+    }
+
+    /// Return the list of tasks.
+    ///
+    pub fn get_tasks(&self) -> &Vec<Task> {
+        &self.tasks
+    }
+
+    /// Set the list of tasks.
+    ///
+    pub fn set_tasks(&mut self, tasks: Vec<Task>) -> &mut Self {
+        self.tasks = tasks;
+        self
+    }
+
+    /// Dispatches an asynchronous network event.
+    ///
+    fn dispatch(&self, event: NetworkEvent) {
+        if let Some(net_sender) = &self.net_sender {
+            if let Err(err) = net_sender.send(event) {
+                error!("Recieved error from network dispatch: {}", err);
+            }
+        }
     }
 }
 
@@ -451,22 +513,48 @@ mod tests {
             ..State::default()
         };
         state.select_current_shortcut();
-        assert_eq!(*state.view_stack.last().unwrap(), view::my_tasks());
+        assert_eq!(*state.view_stack.last().unwrap(), View::MyTasks);
         assert_eq!(state.current_focus, Focus::View);
         state.current_shortcut = Shortcut::PastDue;
         state.select_current_shortcut();
-        assert_eq!(*state.view_stack.last().unwrap(), view::past_due());
+        assert_eq!(*state.view_stack.last().unwrap(), View::PastDue);
         assert_eq!(state.current_focus, Focus::View);
     }
 
     #[test]
     fn current_view() {
         let mut state = State {
-            view_stack: vec![view::due_soon()],
+            view_stack: vec![View::DueSoon],
             ..State::default()
         };
-        assert_eq!(*state.current_view(), view::due_soon());
-        state.view_stack = vec![view::recently_completed()];
-        assert_eq!(*state.current_view(), view::recently_completed());
+        assert_eq!(*state.current_view(), View::DueSoon);
+        state.view_stack = vec![View::RecentlyCompleted];
+        assert_eq!(*state.current_view(), View::RecentlyCompleted);
+    }
+
+    #[test]
+    fn get_tasks() {
+        let tasks = vec![
+            Faker.fake::<Task>(),
+            Faker.fake::<Task>(),
+            Faker.fake::<Task>(),
+        ];
+        let state = State {
+            tasks: tasks.to_owned(),
+            ..State::default()
+        };
+        assert_eq!(tasks, *state.get_tasks());
+    }
+
+    #[test]
+    fn set_tasks() {
+        let mut state = State::default();
+        let tasks = vec![
+            Faker.fake::<Task>(),
+            Faker.fake::<Task>(),
+            Faker.fake::<Task>(),
+        ];
+        state.set_tasks(tasks.to_owned());
+        assert_eq!(tasks, state.tasks);
     }
 }
