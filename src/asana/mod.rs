@@ -6,6 +6,7 @@ pub use resource::*;
 
 use crate::model;
 use anyhow::Result;
+use chrono::prelude::*;
 use client::Client;
 use log::*;
 
@@ -39,11 +40,9 @@ impl Asana {
             workspaces: Vec<WorkspaceModel>,
         } WorkspaceModel);
 
-        // Make request
         let data = self.client.get::<UserModel>("me").await?;
         info!("Received authenticated user details.");
 
-        // Return new user and vector of workspaces
         Ok((
             User {
                 gid: data.gid,
@@ -58,6 +57,35 @@ impl Asana {
                 })
                 .collect(),
         ))
+    }
+
+    /// Returns a vector of incomplete tasks assigned to the user.
+    ///
+    pub async fn my_tasks(&mut self, user_gid: &str, workspace_gid: &str) -> Result<Vec<Task>> {
+        info!("Fetching tasks assigned to user...");
+
+        model!(TaskModel "tasks" { name: String });
+
+        let data: Vec<TaskModel> = self
+            .client
+            .list::<TaskModel>(Some(vec![
+                ("assignee", user_gid),
+                ("workspace", workspace_gid),
+                (
+                    "completed_since",
+                    &Utc::now().format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
+                ),
+            ]))
+            .await?;
+        info!("Received incomplete tasks assigned to user.");
+
+        Ok(data
+            .into_iter()
+            .map(|t| Task {
+                gid: t.gid,
+                name: t.name,
+            })
+            .collect())
     }
 }
 
@@ -118,5 +146,46 @@ mod tests {
         };
         assert!(asana.me().await.is_err());
         mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn my_tasks_success() -> Result<()> {
+        let token: Uuid = UUIDv4.fake();
+        let user: User = Faker.fake();
+        let workspace: Workspace = Faker.fake();
+        let task: [Task; 2] = Faker.fake();
+
+        let server = MockServer::start();
+        let mock = server
+            .mock_async(|when, then| {
+                when.method("GET")
+                    .path("/tasks/")
+                    .header("Authorization", &format!("Bearer {}", &token))
+                    .query_param("assignee", &user.gid)
+                    .query_param("workspace", &workspace.gid)
+                    .query_param_exists("completed_since");
+                then.status(200).json_body(json!({
+                    "data": [
+                        {
+                            "gid": task[0].gid,
+                            "resource_type": "task",
+                            "name": task[0].name,
+                        },
+                        {
+                            "gid": task[1].gid,
+                            "resource_type": "task",
+                            "name": task[1].name,
+                        }
+                    ]
+                }));
+            })
+            .await;
+
+        let mut asana = Asana {
+            client: Client::new(&token.to_string(), &server.base_url()),
+        };
+        asana.my_tasks(&user.gid, &workspace.gid).await?;
+        mock.assert_async().await;
+        Ok(())
     }
 }

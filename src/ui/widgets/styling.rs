@@ -25,3 +25,9 @@ pub fn current_list_item_style() -> Style {
 pub fn active_list_item_style() -> Style {
     current_list_item_style().fg(ASANA_PURPLE)
 }
+
+/// Return the style for normal list items.
+///
+pub fn normal_list_item_style() -> Style {
+    Style::default().fg(Color::White)
+}

@@ -19,7 +19,7 @@ use tui::{
 };
 use tui_logger::{init_logger, set_default_level};
 
-type NetworkEventSender = std::sync::mpsc::Sender<NetworkEvent>;
+pub type NetworkEventSender = std::sync::mpsc::Sender<NetworkEvent>;
 type NetworkEventReceiver = std::sync::mpsc::Receiver<NetworkEvent>;
 
 /// Oversees event processing, state management, and terminal output.
@@ -34,18 +34,17 @@ impl App {
     /// the result of the application execution.
     ///
     pub async fn start(config: Config) -> Result<()> {
-        init_logger(LevelFilter::Info).unwrap();
+        init_logger(LevelFilter::Debug).unwrap();
         set_default_level(LevelFilter::Trace);
 
         info!("Starting application...");
+        let (tx, rx) = std::sync::mpsc::channel::<NetworkEvent>();
         let mut app = App {
             access_token: config
                 .access_token
                 .ok_or(anyhow!("Failed to retrieve access token"))?,
-            state: Arc::new(Mutex::new(State::default())),
+            state: Arc::new(Mutex::new(State::new(tx.clone()))),
         };
-
-        let (tx, rx) = std::sync::mpsc::channel::<NetworkEvent>();
         app.start_network(rx)?;
         app.start_ui(tx).await?;
 
