@@ -1,3 +1,4 @@
+use super::widgets::spinner;
 use super::Frame;
 use crate::state::{Menu, State};
 use crate::ui::widgets::styling;
@@ -21,6 +22,12 @@ pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
                 styling::active_block_title_style(),
             ));
     }
+
+    if state.get_projects().len() == 0 {
+        frame.render_widget(spinner::widget(state, size.height).block(block), size);
+        return;
+    }
+
     let items: Vec<Spans> = state
         .get_projects()
         .iter()
