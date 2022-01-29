@@ -213,7 +213,7 @@ mod tests {
         let token: Uuid = UUIDv4.fake();
         let user: User = Faker.fake();
         let workspace: Workspace = Faker.fake();
-        let task: [Task; 2] = Faker.fake();
+        let tasks: [Task; 2] = Faker.fake();
 
         let server = MockServer::start();
         let mock = server
@@ -227,14 +227,14 @@ mod tests {
                 then.status(200).json_body(json!({
                     "data": [
                         {
-                            "gid": task[0].gid,
+                            "gid": tasks[0].gid,
                             "resource_type": "task",
-                            "name": task[0].name,
+                            "name": tasks[0].name,
                         },
                         {
-                            "gid": task[1].gid,
+                            "gid": tasks[1].gid,
                             "resource_type": "task",
-                            "name": task[1].name,
+                            "name": tasks[1].name,
                         }
                     ]
                 }));
