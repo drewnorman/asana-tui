@@ -17,17 +17,8 @@ pub fn main(frame: &mut Frame, size: Rect, state: &State) {
         View::MyTasks => {
             my_tasks(frame, size, state);
         }
-        View::DueSoon => {
-            due_soon(frame, size, state);
-        }
-        View::PastDue => {
-            past_due(frame, size, state);
-        }
-        View::RecentlyCreated => {
-            recently_created(frame, size, state);
-        }
-        View::RecentlyEdited => {
-            recently_edited(frame, size, state);
+        View::RecentlyModified => {
+            recently_modified(frame, size, state);
         }
         View::RecentlyCompleted => {
             recently_completed(frame, size, state);
@@ -46,26 +37,8 @@ fn my_tasks(frame: &mut Frame, size: Rect, state: &State) {
     frame.render_widget(list, size);
 }
 
-fn due_soon(frame: &mut Frame, size: Rect, state: &State) {
-    let block = view_block("Due Soon", state);
-    let list = task_list(state).block(block);
-    frame.render_widget(list, size);
-}
-
-fn past_due(frame: &mut Frame, size: Rect, state: &State) {
-    let block = view_block("Past Due", state);
-    let list = task_list(state).block(block);
-    frame.render_widget(list, size);
-}
-
-fn recently_created(frame: &mut Frame, size: Rect, state: &State) {
-    let block = view_block("Recently Created", state);
-    let list = task_list(state).block(block);
-    frame.render_widget(list, size);
-}
-
-fn recently_edited(frame: &mut Frame, size: Rect, state: &State) {
-    let block = view_block("Recently Edited", state);
+fn recently_modified(frame: &mut Frame, size: Rect, state: &State) {
+    let block = view_block("Recently Modified", state);
     let list = task_list(state).block(block);
     frame.render_widget(list, size);
 }

@@ -28,10 +28,7 @@ pub enum Menu {
 pub enum View {
     Welcome,
     MyTasks,
-    DueSoon,
-    PastDue,
-    RecentlyCreated,
-    RecentlyEdited,
+    RecentlyModified,
     RecentlyCompleted,
 }
 
@@ -40,10 +37,7 @@ pub enum View {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Shortcut {
     MyTasks,
-    DueSoon,
-    PastDue,
-    RecentlyCreated,
-    RecentlyEdited,
+    RecentlyModified,
     RecentlyCompleted,
 }
 
@@ -212,11 +206,8 @@ impl State {
     ///
     pub fn next_shortcut(&mut self) -> &mut Self {
         match self.current_shortcut {
-            Shortcut::MyTasks => self.current_shortcut = Shortcut::DueSoon,
-            Shortcut::DueSoon => self.current_shortcut = Shortcut::PastDue,
-            Shortcut::PastDue => self.current_shortcut = Shortcut::RecentlyCreated,
-            Shortcut::RecentlyCreated => self.current_shortcut = Shortcut::RecentlyEdited,
-            Shortcut::RecentlyEdited => self.current_shortcut = Shortcut::RecentlyCompleted,
+            Shortcut::MyTasks => self.current_shortcut = Shortcut::RecentlyModified,
+            Shortcut::RecentlyModified => self.current_shortcut = Shortcut::RecentlyCompleted,
             Shortcut::RecentlyCompleted => self.current_shortcut = Shortcut::MyTasks,
         }
         self
@@ -227,11 +218,8 @@ impl State {
     pub fn previous_shortcut(&mut self) -> &mut Self {
         match self.current_shortcut {
             Shortcut::MyTasks => self.current_shortcut = Shortcut::RecentlyCompleted,
-            Shortcut::RecentlyCompleted => self.current_shortcut = Shortcut::RecentlyEdited,
-            Shortcut::RecentlyEdited => self.current_shortcut = Shortcut::RecentlyCreated,
-            Shortcut::RecentlyCreated => self.current_shortcut = Shortcut::PastDue,
-            Shortcut::PastDue => self.current_shortcut = Shortcut::DueSoon,
-            Shortcut::DueSoon => self.current_shortcut = Shortcut::MyTasks,
+            Shortcut::RecentlyCompleted => self.current_shortcut = Shortcut::RecentlyModified,
+            Shortcut::RecentlyModified => self.current_shortcut = Shortcut::MyTasks,
         }
         self
     }
@@ -246,17 +234,8 @@ impl State {
                 self.dispatch(NetworkEvent::MyTasks);
                 self.view_stack.push(View::MyTasks);
             }
-            Shortcut::DueSoon => {
-                self.view_stack.push(View::DueSoon);
-            }
-            Shortcut::PastDue => {
-                self.view_stack.push(View::PastDue);
-            }
-            Shortcut::RecentlyCreated => {
-                self.view_stack.push(View::RecentlyCreated);
-            }
-            Shortcut::RecentlyEdited => {
-                self.view_stack.push(View::RecentlyEdited);
+            Shortcut::RecentlyModified => {
+                self.view_stack.push(View::RecentlyModified);
             }
             Shortcut::RecentlyCompleted => {
                 self.view_stack.push(View::RecentlyCompleted);
@@ -472,13 +451,7 @@ mod tests {
             ..State::default()
         };
         state.next_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::DueSoon);
-        state.next_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::PastDue);
-        state.next_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyCreated);
-        state.next_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyEdited);
+        assert_eq!(state.current_shortcut, Shortcut::RecentlyModified);
         state.next_shortcut();
         assert_eq!(state.current_shortcut, Shortcut::RecentlyCompleted);
         state.next_shortcut();
@@ -494,13 +467,7 @@ mod tests {
         state.previous_shortcut();
         assert_eq!(state.current_shortcut, Shortcut::RecentlyCompleted);
         state.previous_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyEdited);
-        state.previous_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyCreated);
-        state.previous_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::PastDue);
-        state.previous_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::DueSoon);
+        assert_eq!(state.current_shortcut, Shortcut::RecentlyModified);
         state.previous_shortcut();
         assert_eq!(state.current_shortcut, Shortcut::MyTasks);
     }
@@ -515,19 +482,19 @@ mod tests {
         state.select_current_shortcut();
         assert_eq!(*state.view_stack.last().unwrap(), View::MyTasks);
         assert_eq!(state.current_focus, Focus::View);
-        state.current_shortcut = Shortcut::PastDue;
+        state.current_shortcut = Shortcut::RecentlyModified;
         state.select_current_shortcut();
-        assert_eq!(*state.view_stack.last().unwrap(), View::PastDue);
+        assert_eq!(*state.view_stack.last().unwrap(), View::RecentlyModified);
         assert_eq!(state.current_focus, Focus::View);
     }
 
     #[test]
     fn current_view() {
         let mut state = State {
-            view_stack: vec![View::DueSoon],
+            view_stack: vec![View::MyTasks],
             ..State::default()
         };
-        assert_eq!(*state.current_view(), View::DueSoon);
+        assert_eq!(*state.current_view(), View::MyTasks);
         state.view_stack = vec![View::RecentlyCompleted];
         assert_eq!(*state.current_view(), View::RecentlyCompleted);
     }
