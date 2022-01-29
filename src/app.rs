@@ -34,7 +34,7 @@ impl App {
     /// the result of the application execution.
     ///
     pub async fn start(config: Config) -> Result<()> {
-        init_logger(LevelFilter::Debug).unwrap();
+        init_logger(LevelFilter::Info).unwrap();
         set_default_level(LevelFilter::Trace);
 
         info!("Starting application...");
