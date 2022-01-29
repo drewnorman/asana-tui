@@ -31,10 +31,8 @@ pub fn status(frame: &mut Frame, size: Rect, state: &State) {
     let user = state.get_user().unwrap();
     let workspace = state.get_active_workspace().unwrap();
     let text = vec![
-        Spans::from(vec![Span::raw(format!(
-            "User: {} <{}>",
-            &user.name, &user.email
-        ))]),
+        Spans::from(vec![Span::raw(format!("User: {}", &user.name))]),
+        Spans::from(vec![Span::raw(format!("Email: {}", &user.email))]),
         Spans::from(vec![Span::raw("Workspace: "), Span::raw(&workspace.name)]),
     ];
     let paragraph = Paragraph::new(text).block(block);
