@@ -24,7 +24,7 @@ pub fn status(frame: &mut Frame, size: Rect, state: &State) {
     }
 
     if state.get_user().is_none() || state.get_active_workspace().is_none() {
-        frame.render_widget(spinner::widget(state).block(block), size);
+        frame.render_widget(spinner::widget(state, size.height).block(block), size);
         return;
     }
 
