@@ -101,7 +101,9 @@ impl Handler {
                             Menu::Shortcuts => {
                                 state.previous_shortcut();
                             }
-                            Menu::TopList => (),
+                            Menu::TopList => {
+                                state.previous_top_list_item();
+                            }
                         }
                     }
                     Focus::View => {}
@@ -117,7 +119,9 @@ impl Handler {
                             Menu::Shortcuts => {
                                 state.next_shortcut();
                             }
-                            Menu::TopList => (),
+                            Menu::TopList => {
+                                state.next_top_list_item();
+                            }
                         }
                     }
                     Focus::View => {}
