@@ -53,6 +53,7 @@ pub struct State {
     current_focus: Focus,
     current_menu: Menu,
     current_shortcut: Shortcut,
+    current_top_list_item: usize,
     view_stack: Vec<View>,
     tasks: Vec<Task>,
     projects: Vec<Project>,
@@ -72,6 +73,7 @@ impl Default for State {
             current_focus: Focus::Menu,
             current_menu: Menu::Shortcuts,
             current_shortcut: Shortcut::MyTasks,
+            current_top_list_item: 0,
             view_stack: vec![View::Welcome],
             tasks: vec![],
             projects: vec![],
@@ -245,6 +247,33 @@ impl State {
         }
         self.focus_view();
         self
+    }
+
+    /// Activate the next top list item.
+    ///
+    pub fn next_top_list_item(&mut self) -> &mut Self {
+        self.current_top_list_item += 1;
+        if self.current_top_list_item >= self.projects.len() {
+            self.current_top_list_item = 0;
+        }
+        self
+    }
+
+    /// Activate the previous top list item.
+    ///
+    pub fn previous_top_list_item(&mut self) -> &mut Self {
+        if self.current_top_list_item > 0 {
+            self.current_top_list_item -= 1;
+        } else {
+            self.current_top_list_item = self.projects.len() - 1;
+        }
+        self
+    }
+
+    /// Return the current top list item.
+    ///
+    pub fn current_top_list_item(&self) -> &usize {
+        &self.current_top_list_item
     }
 
     /// Return the current view.
@@ -501,6 +530,43 @@ mod tests {
         state.select_current_shortcut();
         assert_eq!(*state.view_stack.last().unwrap(), View::RecentlyModified);
         assert_eq!(state.current_focus, Focus::View);
+    }
+
+    #[test]
+    fn current_top_list_item() {
+        let state = State {
+            current_top_list_item: 2,
+            ..State::default()
+        };
+        assert_eq!(*state.current_top_list_item(), 2);
+    }
+
+    #[test]
+    fn next_top_list_item() {
+        let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
+        let mut state = State {
+            current_top_list_item: 0,
+            projects,
+            ..State::default()
+        };
+        state.next_top_list_item();
+        assert_eq!(state.current_top_list_item, 1);
+        state.next_top_list_item();
+        assert_eq!(state.current_top_list_item, 0);
+    }
+
+    #[test]
+    fn previous_top_list_item() {
+        let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
+        let mut state = State {
+            current_top_list_item: 0,
+            projects,
+            ..State::default()
+        };
+        state.previous_top_list_item();
+        assert_eq!(state.current_top_list_item, 1);
+        state.previous_top_list_item();
+        assert_eq!(state.current_top_list_item, 0);
     }
 
     #[test]
