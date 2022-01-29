@@ -3,8 +3,8 @@ use crate::state::{Menu, State};
 use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
-    text::Span,
-    widgets::{Block, Borders},
+    text::{Span, Spans},
+    widgets::{Block, Borders, Paragraph},
 };
 
 const BLOCK_TITLE: &str = "Projects";
@@ -21,5 +21,13 @@ pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
                 styling::active_block_title_style(),
             ));
     }
-    frame.render_widget(block, size);
+    let items: Vec<Spans> = state
+        .get_projects()
+        .iter()
+        .map(|p| Spans::from(vec![Span::raw(p.name.to_owned())]))
+        .collect();
+    let list = Paragraph::new(items)
+        .style(styling::normal_list_item_style())
+        .block(block);
+    frame.render_widget(list, size);
 }
