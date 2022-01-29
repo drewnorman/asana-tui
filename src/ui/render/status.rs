@@ -24,17 +24,15 @@ pub fn status(frame: &mut Frame, size: Rect, state: &State) {
     }
 
     if state.get_user().is_none() || state.get_active_workspace().is_none() {
-        frame.render_widget(spinner::widget(state).block(block), size);
+        frame.render_widget(spinner::widget(state, size.height).block(block), size);
         return;
     }
 
     let user = state.get_user().unwrap();
     let workspace = state.get_active_workspace().unwrap();
     let text = vec![
-        Spans::from(vec![Span::raw(format!(
-            "User: {} <{}>",
-            &user.name, &user.email
-        ))]),
+        Spans::from(vec![Span::raw(format!("User: {}", &user.name))]),
+        Spans::from(vec![Span::raw(format!("Email: {}", &user.email))]),
         Spans::from(vec![Span::raw("Workspace: "), Span::raw(&workspace.name)]),
     ];
     let paragraph = Paragraph::new(text).block(block);

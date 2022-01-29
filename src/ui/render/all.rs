@@ -26,8 +26,8 @@ fn left(frame: &mut Frame, size: Rect, state: &State) {
     let rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(4),
-            Constraint::Length(8),
+            Constraint::Length(5),
+            Constraint::Length(5),
             Constraint::Min(1),
         ])
         .split(size);
