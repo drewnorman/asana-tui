@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 #[derive(Debug)]
 pub enum Event {
     Me,
+    Projects,
     MyTasks,
 }
 
@@ -33,6 +34,7 @@ impl<'a> Handler<'a> {
         debug!("Processing network event '{:?}'...", event);
         match event {
             Event::Me => self.me().await?,
+            Event::Projects => self.projects().await?,
             Event::MyTasks => self.my_tasks().await?,
         }
         Ok(())
@@ -48,6 +50,18 @@ impl<'a> Handler<'a> {
             state.set_active_workspace(workspaces[0].gid.to_owned());
         }
         state.set_workspaces(workspaces);
+        Ok(())
+    }
+
+    /// Update state with projects.
+    ///
+    async fn projects(&mut self) -> Result<()> {
+        let mut state = self.state.lock().await;
+        let projects = self
+            .asana
+            .projects(&state.get_active_workspace().unwrap().gid)
+            .await?;
+        state.set_projects(projects);
         Ok(())
     }
 

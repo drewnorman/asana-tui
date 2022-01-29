@@ -1,5 +1,5 @@
 use crate::app::NetworkEventSender;
-use crate::asana::{Task, User, Workspace};
+use crate::asana::{Project, Task, User, Workspace};
 use crate::events::network::Event as NetworkEvent;
 use crate::ui::SPINNER_FRAME_COUNT;
 use log::*;
@@ -55,6 +55,7 @@ pub struct State {
     current_shortcut: Shortcut,
     view_stack: Vec<View>,
     tasks: Vec<Task>,
+    projects: Vec<Project>,
 }
 
 /// Defines default application state.
@@ -73,6 +74,7 @@ impl Default for State {
             current_shortcut: Shortcut::MyTasks,
             view_stack: vec![View::Welcome],
             tasks: vec![],
+            projects: vec![],
         }
     }
 }
@@ -261,6 +263,19 @@ impl State {
     ///
     pub fn set_tasks(&mut self, tasks: Vec<Task>) -> &mut Self {
         self.tasks = tasks;
+        self
+    }
+
+    /// Return the list of projects.
+    ///
+    pub fn get_projects(&self) -> &Vec<Project> {
+        &self.projects
+    }
+
+    /// Set the list of projects.
+    ///
+    pub fn set_projects(&mut self, projects: Vec<Project>) -> &mut Self {
+        self.projects = projects;
         self
     }
 
@@ -523,5 +538,31 @@ mod tests {
         ];
         state.set_tasks(tasks.to_owned());
         assert_eq!(tasks, state.tasks);
+    }
+
+    #[test]
+    fn get_projects() {
+        let projects = vec![
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+        ];
+        let state = State {
+            projects: projects.to_owned(),
+            ..State::default()
+        };
+        assert_eq!(projects, *state.get_projects());
+    }
+
+    #[test]
+    fn set_projects() {
+        let mut state = State::default();
+        let projects = vec![
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+        ];
+        state.set_projects(projects.to_owned());
+        assert_eq!(projects, state.projects);
     }
 }
