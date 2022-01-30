@@ -284,7 +284,7 @@ impl State {
     /// Select the current top list item.
     ///
     pub fn select_current_top_list_item(&mut self) -> &mut Self {
-        if self.projects.len() == 0 {
+        if self.projects.is_empty() {
             return self;
         }
         self.project = Some(self.projects[self.current_top_list_item].to_owned());

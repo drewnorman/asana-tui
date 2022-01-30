@@ -27,7 +27,7 @@ pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
         list_item_style = styling::current_list_item_style();
     }
 
-    if state.get_projects().len() == 0 {
+    if state.get_projects().is_empty() {
         frame.render_widget(spinner::widget(state, size.height).block(block), size);
         return;
     }
