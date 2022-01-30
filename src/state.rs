@@ -265,7 +265,9 @@ impl State {
         if self.current_top_list_index > 0 {
             self.current_top_list_index -= 1;
         } else {
-            self.current_top_list_index = self.projects.len() - 1;
+            if !self.projects.is_empty() {
+                self.current_top_list_index = self.projects.len() - 1;
+            }
         }
         self
     }
@@ -563,11 +565,10 @@ mod tests {
     }
 
     #[test]
-    fn next_top_list_index() {
-        let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
+    fn next_top_list_index_when_nonempty() {
         let mut state = State {
             current_top_list_index: 0,
-            projects,
+            projects: vec![Faker.fake::<Project>(), Faker.fake::<Project>()],
             ..State::default()
         };
         state.next_top_list_index();
@@ -577,15 +578,36 @@ mod tests {
     }
 
     #[test]
-    fn previous_top_list_index() {
-        let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
+    fn next_top_list_index_when_empty() {
         let mut state = State {
             current_top_list_index: 0,
-            projects,
+            projects: vec![],
+            ..State::default()
+        };
+        state.next_top_list_index();
+        assert_eq!(state.current_top_list_index, 0);
+    }
+
+    #[test]
+    fn previous_top_list_index_when_nonempty() {
+        let mut state = State {
+            current_top_list_index: 0,
+            projects: vec![Faker.fake::<Project>(), Faker.fake::<Project>()],
             ..State::default()
         };
         state.previous_top_list_index();
         assert_eq!(state.current_top_list_index, 1);
+        state.previous_top_list_index();
+        assert_eq!(state.current_top_list_index, 0);
+    }
+
+    #[test]
+    fn previous_top_list_index_when_empty() {
+        let mut state = State {
+            current_top_list_index: 0,
+            projects: vec![],
+            ..State::default()
+        };
         state.previous_top_list_index();
         assert_eq!(state.current_top_list_index, 0);
     }
