@@ -1,3 +1,4 @@
+use super::widgets::spinner;
 use super::Frame;
 use crate::state::{Focus, State, View};
 use crate::ui::widgets::styling;
@@ -36,19 +37,19 @@ fn welcome(frame: &mut Frame, size: Rect, state: &State) {
 
 fn my_tasks(frame: &mut Frame, size: Rect, state: &State) {
     let block = view_block("My Tasks", state);
-    let list = task_list(state).block(block);
+    let list = task_list(state, size).block(block);
     frame.render_widget(list, size);
 }
 
 fn recently_modified(frame: &mut Frame, size: Rect, state: &State) {
     let block = view_block("Recently Modified", state);
-    let list = task_list(state).block(block);
+    let list = task_list(state, size).block(block);
     frame.render_widget(list, size);
 }
 
 fn recently_completed(frame: &mut Frame, size: Rect, state: &State) {
     let block = view_block("Recently Completed", state);
-    let list = task_list(state).block(block);
+    let list = task_list(state, size).block(block);
     frame.render_widget(list, size);
 }
 
@@ -58,11 +59,14 @@ fn project_tasks(frame: &mut Frame, size: Rect, state: &State) {
         None => "Project",
     };
     let block = view_block(title, state);
-    let list = task_list(state).block(block);
+    let list = task_list(state, size).block(block);
     frame.render_widget(list, size);
 }
 
-fn task_list(state: &State) -> Paragraph {
+fn task_list(state: &State, size: Rect) -> Paragraph {
+    if state.get_tasks().is_empty() {
+        return spinner::widget(state, size.height);
+    }
     let items: Vec<Spans> = state
         .get_tasks()
         .iter()
