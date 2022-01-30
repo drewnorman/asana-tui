@@ -1,5 +1,5 @@
 use crate::app::NetworkEventSender;
-use crate::asana::{Task, User, Workspace};
+use crate::asana::{Project, Task, User, Workspace};
 use crate::events::network::Event as NetworkEvent;
 use crate::ui::SPINNER_FRAME_COUNT;
 use log::*;
@@ -30,6 +30,7 @@ pub enum View {
     MyTasks,
     RecentlyModified,
     RecentlyCompleted,
+    ProjectTasks,
 }
 
 /// Specifying the different shortcuts.
@@ -53,8 +54,11 @@ pub struct State {
     current_focus: Focus,
     current_menu: Menu,
     current_shortcut: Shortcut,
+    current_top_list_item: usize,
     view_stack: Vec<View>,
     tasks: Vec<Task>,
+    projects: Vec<Project>,
+    project: Option<Project>,
 }
 
 /// Defines default application state.
@@ -71,8 +75,11 @@ impl Default for State {
             current_focus: Focus::Menu,
             current_menu: Menu::Shortcuts,
             current_shortcut: Shortcut::MyTasks,
+            current_top_list_item: 0,
             view_stack: vec![View::Welcome],
             tasks: vec![],
+            projects: vec![],
+            project: None,
         }
     }
 }
@@ -235,12 +242,56 @@ impl State {
                 self.view_stack.push(View::MyTasks);
             }
             Shortcut::RecentlyModified => {
+                self.tasks.clear();
                 self.view_stack.push(View::RecentlyModified);
             }
             Shortcut::RecentlyCompleted => {
+                self.tasks.clear();
                 self.view_stack.push(View::RecentlyCompleted);
             }
         }
+        self.focus_view();
+        self
+    }
+
+    /// Activate the next top list item.
+    ///
+    pub fn next_top_list_item(&mut self) -> &mut Self {
+        self.current_top_list_item += 1;
+        if self.current_top_list_item >= self.projects.len() {
+            self.current_top_list_item = 0;
+        }
+        self
+    }
+
+    /// Activate the previous top list item.
+    ///
+    pub fn previous_top_list_item(&mut self) -> &mut Self {
+        if self.current_top_list_item > 0 {
+            self.current_top_list_item -= 1;
+        } else {
+            self.current_top_list_item = self.projects.len() - 1;
+        }
+        self
+    }
+
+    /// Return the current top list item.
+    ///
+    pub fn current_top_list_item(&self) -> &usize {
+        &self.current_top_list_item
+    }
+
+    /// Select the current top list item.
+    ///
+    pub fn select_current_top_list_item(&mut self) -> &mut Self {
+        if self.projects.is_empty() {
+            return self;
+        }
+        self.project = Some(self.projects[self.current_top_list_item].to_owned());
+        self.view_stack.clear();
+        self.tasks.clear();
+        self.dispatch(NetworkEvent::ProjectTasks);
+        self.view_stack.push(View::ProjectTasks);
         self.focus_view();
         self
     }
@@ -262,6 +313,25 @@ impl State {
     pub fn set_tasks(&mut self, tasks: Vec<Task>) -> &mut Self {
         self.tasks = tasks;
         self
+    }
+
+    /// Return the list of projects.
+    ///
+    pub fn get_projects(&self) -> &Vec<Project> {
+        &self.projects
+    }
+
+    /// Set the list of projects.
+    ///
+    pub fn set_projects(&mut self, projects: Vec<Project>) -> &mut Self {
+        self.projects = projects;
+        self
+    }
+
+    /// Return the current project.
+    ///
+    pub fn get_project(&self) -> Option<&Project> {
+        self.project.as_ref()
     }
 
     /// Dispatches an asynchronous network event.
@@ -489,6 +559,43 @@ mod tests {
     }
 
     #[test]
+    fn current_top_list_item() {
+        let state = State {
+            current_top_list_item: 2,
+            ..State::default()
+        };
+        assert_eq!(*state.current_top_list_item(), 2);
+    }
+
+    #[test]
+    fn next_top_list_item() {
+        let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
+        let mut state = State {
+            current_top_list_item: 0,
+            projects,
+            ..State::default()
+        };
+        state.next_top_list_item();
+        assert_eq!(state.current_top_list_item, 1);
+        state.next_top_list_item();
+        assert_eq!(state.current_top_list_item, 0);
+    }
+
+    #[test]
+    fn previous_top_list_item() {
+        let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
+        let mut state = State {
+            current_top_list_item: 0,
+            projects,
+            ..State::default()
+        };
+        state.previous_top_list_item();
+        assert_eq!(state.current_top_list_item, 1);
+        state.previous_top_list_item();
+        assert_eq!(state.current_top_list_item, 0);
+    }
+
+    #[test]
     fn current_view() {
         let mut state = State {
             view_stack: vec![View::MyTasks],
@@ -523,5 +630,31 @@ mod tests {
         ];
         state.set_tasks(tasks.to_owned());
         assert_eq!(tasks, state.tasks);
+    }
+
+    #[test]
+    fn get_projects() {
+        let projects = vec![
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+        ];
+        let state = State {
+            projects: projects.to_owned(),
+            ..State::default()
+        };
+        assert_eq!(projects, *state.get_projects());
+    }
+
+    #[test]
+    fn set_projects() {
+        let mut state = State::default();
+        let projects = vec![
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+            Faker.fake::<Project>(),
+        ];
+        state.set_projects(projects.to_owned());
+        assert_eq!(projects, state.projects);
     }
 }

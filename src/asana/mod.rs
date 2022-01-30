@@ -21,7 +21,10 @@ impl Asana {
     /// Returns a new instance for the given access token.
     ///
     pub fn new(access_token: &str) -> Asana {
-        info!("Initializing Asana client with personal access token...");
+        debug!(
+            "Initializing Asana client with personal access token {}...",
+            access_token
+        );
         Asana {
             client: Client::new(access_token, "https://app.asana.com/api/1.0"),
         }
@@ -31,7 +34,7 @@ impl Asana {
     /// they have access.
     ///
     pub async fn me(&mut self) -> Result<(User, Vec<Workspace>)> {
-        info!("Fetching authenticated user details...");
+        debug!("Requesting authenticated user details...");
 
         model!(WorkspaceModel "workspaces" { name: String });
         model!(UserModel "users" {
@@ -41,7 +44,6 @@ impl Asana {
         } WorkspaceModel);
 
         let data = self.client.get::<UserModel>("me").await?;
-        info!("Received authenticated user details.");
 
         Ok((
             User {
@@ -59,10 +61,55 @@ impl Asana {
         ))
     }
 
+    /// Returns a vector of projects for the workspace.
+    ///
+    pub async fn projects(&mut self, workspace_gid: &str) -> Result<Vec<Project>> {
+        debug!("Requesting projects for workspace GID {}...", workspace_gid);
+
+        model!(ProjectModel "projects" { name: String });
+
+        let data: Vec<ProjectModel> = self
+            .client
+            .list::<ProjectModel>(Some(vec![("workspace", workspace_gid)]))
+            .await?;
+
+        Ok(data
+            .into_iter()
+            .map(|p| Project {
+                gid: p.gid,
+                name: p.name,
+            })
+            .collect())
+    }
+
+    /// Returns a vector of tasks for the project.
+    ///
+    pub async fn tasks(&mut self, project_gid: &str) -> Result<Vec<Task>> {
+        debug!("Requesting tasks for project GID {}...", project_gid);
+
+        model!(TaskModel "tasks" { name: String });
+
+        let data: Vec<TaskModel> = self
+            .client
+            .list::<TaskModel>(Some(vec![("project", project_gid)]))
+            .await?;
+
+        Ok(data
+            .into_iter()
+            .map(|t| Task {
+                gid: t.gid,
+                name: t.name,
+            })
+            .collect())
+    }
+
     /// Returns a vector of incomplete tasks assigned to the user.
     ///
     pub async fn my_tasks(&mut self, user_gid: &str, workspace_gid: &str) -> Result<Vec<Task>> {
-        info!("Fetching tasks assigned to user...");
+        debug!(
+            "Requesting tasks for user GID {} and workspace GID {}...",
+            user_gid, workspace_gid
+        );
 
         model!(TaskModel "tasks" { name: String });
 
@@ -77,7 +124,6 @@ impl Asana {
                 ),
             ]))
             .await?;
-        info!("Received incomplete tasks assigned to user.");
 
         Ok(data
             .into_iter()
@@ -149,11 +195,87 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn projects_success() -> Result<()> {
+        let token: Uuid = UUIDv4.fake();
+        let workspace: Workspace = Faker.fake();
+        let projects: [Project; 2] = Faker.fake();
+
+        let server = MockServer::start();
+        let mock = server
+            .mock_async(|when, then| {
+                when.method("GET")
+                    .path("/projects/")
+                    .header("Authorization", &format!("Bearer {}", &token))
+                    .query_param("workspace", &workspace.gid);
+                then.status(200).json_body(json!({
+                    "data": [
+                        {
+                            "gid": projects[0].gid,
+                            "resource_type": "task",
+                            "name": projects[0].name,
+                        },
+                        {
+                            "gid": projects[1].gid,
+                            "resource_type": "task",
+                            "name": projects[1].name,
+                        }
+                    ]
+                }));
+            })
+            .await;
+
+        let mut asana = Asana {
+            client: Client::new(&token.to_string(), &server.base_url()),
+        };
+        asana.projects(&workspace.gid).await?;
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn tasks_success() -> Result<()> {
+        let token: Uuid = UUIDv4.fake();
+        let project: Project = Faker.fake();
+        let tasks: [Task; 2] = Faker.fake();
+
+        let server = MockServer::start();
+        let mock = server
+            .mock_async(|when, then| {
+                when.method("GET")
+                    .path("/tasks/")
+                    .header("Authorization", &format!("Bearer {}", &token))
+                    .query_param("project", &project.gid);
+                then.status(200).json_body(json!({
+                    "data": [
+                        {
+                            "gid": tasks[0].gid,
+                            "resource_type": "task",
+                            "name": tasks[0].name,
+                        },
+                        {
+                            "gid": tasks[1].gid,
+                            "resource_type": "task",
+                            "name": tasks[1].name,
+                        }
+                    ]
+                }));
+            })
+            .await;
+
+        let mut asana = Asana {
+            client: Client::new(&token.to_string(), &server.base_url()),
+        };
+        asana.tasks(&project.gid).await?;
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn my_tasks_success() -> Result<()> {
         let token: Uuid = UUIDv4.fake();
         let user: User = Faker.fake();
         let workspace: Workspace = Faker.fake();
-        let task: [Task; 2] = Faker.fake();
+        let tasks: [Task; 2] = Faker.fake();
 
         let server = MockServer::start();
         let mock = server
@@ -167,14 +289,14 @@ mod tests {
                 then.status(200).json_body(json!({
                     "data": [
                         {
-                            "gid": task[0].gid,
+                            "gid": tasks[0].gid,
                             "resource_type": "task",
-                            "name": task[0].name,
+                            "name": tasks[0].name,
                         },
                         {
-                            "gid": task[1].gid,
+                            "gid": tasks[1].gid,
                             "resource_type": "task",
-                            "name": task[1].name,
+                            "name": tasks[1].name,
                         }
                     ]
                 }));

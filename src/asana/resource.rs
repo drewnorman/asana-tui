@@ -24,3 +24,11 @@ pub struct Task {
     pub gid: String,
     pub name: String,
 }
+
+/// Defines project data structure.
+///
+#[derive(Clone, Debug, Dummy, PartialEq)]
+pub struct Project {
+    pub gid: String,
+    pub name: String,
+}
