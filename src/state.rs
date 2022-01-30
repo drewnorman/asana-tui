@@ -264,10 +264,8 @@ impl State {
     pub fn previous_top_list_index(&mut self) -> &mut Self {
         if self.current_top_list_index > 0 {
             self.current_top_list_index -= 1;
-        } else {
-            if !self.projects.is_empty() {
-                self.current_top_list_index = self.projects.len() - 1;
-            }
+        } else if !self.projects.is_empty() {
+            self.current_top_list_index = self.projects.len() - 1;
         }
         self
     }
