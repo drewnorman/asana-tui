@@ -35,12 +35,7 @@ pub enum View {
 
 /// Specifying the different shortcuts.
 ///
-#[derive(Debug, PartialEq, Eq)]
-pub enum Shortcut {
-    MyTasks,
-    RecentlyModified,
-    RecentlyCompleted,
-}
+pub const SHORTCUTS: [&str; 3] = ["My Tasks", "Recently Modified", "Recently Completed"];
 
 /// Houses data representative of application state.
 ///
@@ -53,7 +48,7 @@ pub struct State {
     spinner_index: usize,
     current_focus: Focus,
     current_menu: Menu,
-    current_shortcut: Shortcut,
+    current_shortcut_index: usize,
     current_top_list_item: usize,
     view_stack: Vec<View>,
     tasks: Vec<Task>,
@@ -74,7 +69,7 @@ impl Default for State {
             spinner_index: 0,
             current_focus: Focus::Menu,
             current_menu: Menu::Shortcuts,
-            current_shortcut: Shortcut::MyTasks,
+            current_shortcut_index: 0,
             current_top_list_item: 0,
             view_stack: vec![View::Welcome],
             tasks: vec![],
@@ -205,50 +200,50 @@ impl State {
 
     /// Return the current shortcut.
     ///
-    pub fn current_shortcut(&self) -> &Shortcut {
-        &self.current_shortcut
+    pub fn current_shortcut_index(&self) -> &usize {
+        &self.current_shortcut_index
     }
 
     /// Activate the next shortcut.
     ///
-    pub fn next_shortcut(&mut self) -> &mut Self {
-        match self.current_shortcut {
-            Shortcut::MyTasks => self.current_shortcut = Shortcut::RecentlyModified,
-            Shortcut::RecentlyModified => self.current_shortcut = Shortcut::RecentlyCompleted,
-            Shortcut::RecentlyCompleted => self.current_shortcut = Shortcut::MyTasks,
+    pub fn next_shortcut_index(&mut self) -> &mut Self {
+        self.current_shortcut_index += 1;
+        if self.current_shortcut_index >= SHORTCUTS.len() {
+            self.current_shortcut_index = 0;
         }
         self
     }
 
     /// Activate the previous shortcut.
     ///
-    pub fn previous_shortcut(&mut self) -> &mut Self {
-        match self.current_shortcut {
-            Shortcut::MyTasks => self.current_shortcut = Shortcut::RecentlyCompleted,
-            Shortcut::RecentlyCompleted => self.current_shortcut = Shortcut::RecentlyModified,
-            Shortcut::RecentlyModified => self.current_shortcut = Shortcut::MyTasks,
+    pub fn previous_shortcut_index(&mut self) -> &mut Self {
+        if self.current_shortcut_index > 0 {
+            self.current_shortcut_index -= 1;
+        } else {
+            self.current_shortcut_index = SHORTCUTS.len() - 1;
         }
         self
     }
 
     /// Select the current shortcut.
     ///
-    pub fn select_current_shortcut(&mut self) -> &mut Self {
+    pub fn select_current_shortcut_index(&mut self) -> &mut Self {
         self.view_stack.clear();
-        match self.current_shortcut {
-            Shortcut::MyTasks => {
+        match SHORTCUTS[self.current_shortcut_index] {
+            "My Tasks" => {
                 self.tasks.clear();
                 self.dispatch(NetworkEvent::MyTasks);
                 self.view_stack.push(View::MyTasks);
             }
-            Shortcut::RecentlyModified => {
+            "Recently Modified" => {
                 self.tasks.clear();
                 self.view_stack.push(View::RecentlyModified);
             }
-            Shortcut::RecentlyCompleted => {
+            "Recently Completed" => {
                 self.tasks.clear();
                 self.view_stack.push(View::RecentlyCompleted);
             }
+            _ => (),
         }
         self.focus_view();
         self
@@ -506,54 +501,54 @@ mod tests {
     }
 
     #[test]
-    fn current_shortcut() {
+    fn current_shortcut_index() {
         let state = State {
-            current_shortcut: Shortcut::MyTasks,
+            current_shortcut_index: 0,
             ..State::default()
         };
-        assert_eq!(*state.current_shortcut(), Shortcut::MyTasks);
+        assert_eq!(*state.current_shortcut_index(), 0);
     }
 
     #[test]
-    fn next_shortcut() {
+    fn next_shortcut_index() {
         let mut state = State {
-            current_shortcut: Shortcut::MyTasks,
+            current_shortcut_index: 0,
             ..State::default()
         };
-        state.next_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyModified);
-        state.next_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyCompleted);
-        state.next_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::MyTasks);
+        state.next_shortcut_index();
+        assert_eq!(state.current_shortcut_index, 1);
+        state.next_shortcut_index();
+        assert_eq!(state.current_shortcut_index, 2);
+        state.next_shortcut_index();
+        assert_eq!(state.current_shortcut_index, 0);
     }
 
     #[test]
-    fn previous_shortcut() {
+    fn previous_shortcut_index() {
         let mut state = State {
-            current_shortcut: Shortcut::MyTasks,
+            current_shortcut_index: 0,
             ..State::default()
         };
-        state.previous_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyCompleted);
-        state.previous_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::RecentlyModified);
-        state.previous_shortcut();
-        assert_eq!(state.current_shortcut, Shortcut::MyTasks);
+        state.previous_shortcut_index();
+        assert_eq!(state.current_shortcut_index, 2);
+        state.previous_shortcut_index();
+        assert_eq!(state.current_shortcut_index, 1);
+        state.previous_shortcut_index();
+        assert_eq!(state.current_shortcut_index, 0);
     }
 
     #[test]
-    fn select_current_shortcut() {
+    fn select_current_shortcut_index() {
         let mut state = State {
-            current_shortcut: Shortcut::MyTasks,
+            current_shortcut_index: 0,
             current_focus: Focus::Menu,
             ..State::default()
         };
-        state.select_current_shortcut();
+        state.select_current_shortcut_index();
         assert_eq!(*state.view_stack.last().unwrap(), View::MyTasks);
         assert_eq!(state.current_focus, Focus::View);
-        state.current_shortcut = Shortcut::RecentlyModified;
-        state.select_current_shortcut();
+        state.current_shortcut_index = 1;
+        state.select_current_shortcut_index();
         assert_eq!(*state.view_stack.last().unwrap(), View::RecentlyModified);
         assert_eq!(state.current_focus, Focus::View);
     }

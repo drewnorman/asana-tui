@@ -1,9 +1,8 @@
 use super::Frame;
-use crate::state::{Focus, Menu, Shortcut, State};
+use crate::state::{Focus, Menu, State, SHORTCUTS};
 use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
-    style::Style,
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
 };
@@ -14,10 +13,6 @@ const BLOCK_TITLE: &str = "Shortcuts";
 ///
 pub fn shortcuts(frame: &mut Frame, size: Rect, state: &State) {
     let mut block = Block::default().title(BLOCK_TITLE).borders(Borders::ALL);
-
-    let mut my_tasks_style = Style::default();
-    let mut recently_modified_style = Style::default();
-    let mut recently_completed_style = Style::default();
 
     let mut list_item_style = styling::current_list_item_style();
     if *state.current_focus() == Focus::Menu && *state.current_menu() == Menu::Shortcuts {
@@ -30,29 +25,20 @@ pub fn shortcuts(frame: &mut Frame, size: Rect, state: &State) {
         list_item_style = styling::active_list_item_style();
     }
 
-    match state.current_shortcut() {
-        Shortcut::MyTasks => {
-            my_tasks_style = list_item_style;
-        }
-        Shortcut::RecentlyModified => {
-            recently_modified_style = list_item_style;
-        }
-        Shortcut::RecentlyCompleted => {
-            recently_completed_style = list_item_style;
-        }
-    };
+    let text: Vec<Spans> = SHORTCUTS
+        .iter()
+        .enumerate()
+        .map(|(i, s)| {
+            let span;
+            if i == *state.current_shortcut_index() {
+                span = Span::styled(s.to_owned(), list_item_style);
+            } else {
+                span = Span::raw(s.to_owned());
+            }
+            Spans::from(vec![span])
+        })
+        .collect();
 
-    let text = vec![
-        Spans::from(vec![Span::styled("My Tasks", my_tasks_style)]),
-        Spans::from(vec![Span::styled(
-            "Recently Modified",
-            recently_modified_style,
-        )]),
-        Spans::from(vec![Span::styled(
-            "Recently Completed",
-            recently_completed_style,
-        )]),
-    ];
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, size);
 }
