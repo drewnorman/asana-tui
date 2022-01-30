@@ -81,6 +81,27 @@ impl Asana {
             .collect())
     }
 
+    /// Returns a vector of tasks for the project.
+    ///
+    pub async fn tasks(&mut self, project_gid: &str) -> Result<Vec<Task>> {
+        debug!("Requesting tasks for project GID {}...", project_gid);
+
+        model!(TaskModel "tasks" { name: String });
+
+        let data: Vec<TaskModel> = self
+            .client
+            .list::<TaskModel>(Some(vec![("project", project_gid)]))
+            .await?;
+
+        Ok(data
+            .into_iter()
+            .map(|t| Task {
+                gid: t.gid,
+                name: t.name,
+            })
+            .collect())
+    }
+
     /// Returns a vector of incomplete tasks assigned to the user.
     ///
     pub async fn my_tasks(&mut self, user_gid: &str, workspace_gid: &str) -> Result<Vec<Task>> {
@@ -204,6 +225,44 @@ mod tests {
             client: Client::new(&token.to_string(), &server.base_url()),
         };
         asana.projects(&workspace.gid).await?;
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn tasks_success() -> Result<()> {
+        let token: Uuid = UUIDv4.fake();
+        let project: Project = Faker.fake();
+        let tasks: [Task; 2] = Faker.fake();
+
+        let server = MockServer::start();
+        let mock = server
+            .mock_async(|when, then| {
+                when.method("GET")
+                    .path("/tasks/")
+                    .header("Authorization", &format!("Bearer {}", &token))
+                    .query_param("project", &project.gid);
+                then.status(200).json_body(json!({
+                    "data": [
+                        {
+                            "gid": tasks[0].gid,
+                            "resource_type": "task",
+                            "name": tasks[0].name,
+                        },
+                        {
+                            "gid": tasks[1].gid,
+                            "resource_type": "task",
+                            "name": tasks[1].name,
+                        }
+                    ]
+                }));
+            })
+            .await;
+
+        let mut asana = Asana {
+            client: Client::new(&token.to_string(), &server.base_url()),
+        };
+        asana.tasks(&project.gid).await?;
         mock.assert_async().await;
         Ok(())
     }
