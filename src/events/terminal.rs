@@ -102,7 +102,7 @@ impl Handler {
                                 state.previous_shortcut_index();
                             }
                             Menu::TopList => {
-                                state.previous_top_list_item();
+                                state.previous_top_list_index();
                             }
                         }
                     }
@@ -120,7 +120,7 @@ impl Handler {
                                 state.next_shortcut_index();
                             }
                             Menu::TopList => {
-                                state.next_top_list_item();
+                                state.next_top_list_index();
                             }
                         }
                     }
@@ -138,7 +138,7 @@ impl Handler {
                                 state.select_current_shortcut_index();
                             }
                             Menu::TopList => {
-                                state.select_current_top_list_item();
+                                state.select_current_top_list_index();
                             }
                         }
                     }

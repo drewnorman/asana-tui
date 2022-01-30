@@ -49,7 +49,7 @@ pub struct State {
     current_focus: Focus,
     current_menu: Menu,
     current_shortcut_index: usize,
-    current_top_list_item: usize,
+    current_top_list_index: usize,
     view_stack: Vec<View>,
     tasks: Vec<Task>,
     projects: Vec<Project>,
@@ -70,7 +70,7 @@ impl Default for State {
             current_focus: Focus::Menu,
             current_menu: Menu::Shortcuts,
             current_shortcut_index: 0,
-            current_top_list_item: 0,
+            current_top_list_index: 0,
             view_stack: vec![View::Welcome],
             tasks: vec![],
             projects: vec![],
@@ -251,38 +251,38 @@ impl State {
 
     /// Activate the next top list item.
     ///
-    pub fn next_top_list_item(&mut self) -> &mut Self {
-        self.current_top_list_item += 1;
-        if self.current_top_list_item >= self.projects.len() {
-            self.current_top_list_item = 0;
+    pub fn next_top_list_index(&mut self) -> &mut Self {
+        self.current_top_list_index += 1;
+        if self.current_top_list_index >= self.projects.len() {
+            self.current_top_list_index = 0;
         }
         self
     }
 
     /// Activate the previous top list item.
     ///
-    pub fn previous_top_list_item(&mut self) -> &mut Self {
-        if self.current_top_list_item > 0 {
-            self.current_top_list_item -= 1;
+    pub fn previous_top_list_index(&mut self) -> &mut Self {
+        if self.current_top_list_index > 0 {
+            self.current_top_list_index -= 1;
         } else {
-            self.current_top_list_item = self.projects.len() - 1;
+            self.current_top_list_index = self.projects.len() - 1;
         }
         self
     }
 
     /// Return the current top list item.
     ///
-    pub fn current_top_list_item(&self) -> &usize {
-        &self.current_top_list_item
+    pub fn current_top_list_index(&self) -> &usize {
+        &self.current_top_list_index
     }
 
     /// Select the current top list item.
     ///
-    pub fn select_current_top_list_item(&mut self) -> &mut Self {
+    pub fn select_current_top_list_index(&mut self) -> &mut Self {
         if self.projects.is_empty() {
             return self;
         }
-        self.project = Some(self.projects[self.current_top_list_item].to_owned());
+        self.project = Some(self.projects[self.current_top_list_index].to_owned());
         self.view_stack.clear();
         self.tasks.clear();
         self.dispatch(NetworkEvent::ProjectTasks);
@@ -554,40 +554,40 @@ mod tests {
     }
 
     #[test]
-    fn current_top_list_item() {
+    fn current_top_list_index() {
         let state = State {
-            current_top_list_item: 2,
+            current_top_list_index: 2,
             ..State::default()
         };
-        assert_eq!(*state.current_top_list_item(), 2);
+        assert_eq!(*state.current_top_list_index(), 2);
     }
 
     #[test]
-    fn next_top_list_item() {
+    fn next_top_list_index() {
         let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
         let mut state = State {
-            current_top_list_item: 0,
+            current_top_list_index: 0,
             projects,
             ..State::default()
         };
-        state.next_top_list_item();
-        assert_eq!(state.current_top_list_item, 1);
-        state.next_top_list_item();
-        assert_eq!(state.current_top_list_item, 0);
+        state.next_top_list_index();
+        assert_eq!(state.current_top_list_index, 1);
+        state.next_top_list_index();
+        assert_eq!(state.current_top_list_index, 0);
     }
 
     #[test]
-    fn previous_top_list_item() {
+    fn previous_top_list_index() {
         let projects = vec![Faker.fake::<Project>(), Faker.fake::<Project>()];
         let mut state = State {
-            current_top_list_item: 0,
+            current_top_list_index: 0,
             projects,
             ..State::default()
         };
-        state.previous_top_list_item();
-        assert_eq!(state.current_top_list_item, 1);
-        state.previous_top_list_item();
-        assert_eq!(state.current_top_list_item, 0);
+        state.previous_top_list_index();
+        assert_eq!(state.current_top_list_index, 1);
+        state.previous_top_list_index();
+        assert_eq!(state.current_top_list_index, 0);
     }
 
     #[test]
