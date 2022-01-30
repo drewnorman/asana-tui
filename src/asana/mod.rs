@@ -21,7 +21,10 @@ impl Asana {
     /// Returns a new instance for the given access token.
     ///
     pub fn new(access_token: &str) -> Asana {
-        info!("Initializing Asana client with personal access token...");
+        debug!(
+            "Initializing Asana client with personal access token {}...",
+            access_token
+        );
         Asana {
             client: Client::new(access_token, "https://app.asana.com/api/1.0"),
         }
@@ -31,7 +34,7 @@ impl Asana {
     /// they have access.
     ///
     pub async fn me(&mut self) -> Result<(User, Vec<Workspace>)> {
-        info!("Fetching authenticated user details...");
+        debug!("Requesting authenticated user details...");
 
         model!(WorkspaceModel "workspaces" { name: String });
         model!(UserModel "users" {
@@ -41,7 +44,6 @@ impl Asana {
         } WorkspaceModel);
 
         let data = self.client.get::<UserModel>("me").await?;
-        info!("Received authenticated user details.");
 
         Ok((
             User {
@@ -62,7 +64,7 @@ impl Asana {
     /// Returns a vector of projects for the workspace.
     ///
     pub async fn projects(&mut self, workspace_gid: &str) -> Result<Vec<Project>> {
-        info!("Fetching projects for the workspace...");
+        debug!("Requesting projects for workspace GID {}...", workspace_gid);
 
         model!(ProjectModel "projects" { name: String });
 
@@ -70,7 +72,6 @@ impl Asana {
             .client
             .list::<ProjectModel>(Some(vec![("workspace", workspace_gid)]))
             .await?;
-        info!("Received projects for the workspace.");
 
         Ok(data
             .into_iter()
@@ -105,7 +106,10 @@ impl Asana {
     /// Returns a vector of incomplete tasks assigned to the user.
     ///
     pub async fn my_tasks(&mut self, user_gid: &str, workspace_gid: &str) -> Result<Vec<Task>> {
-        info!("Fetching tasks assigned to user...");
+        debug!(
+            "Requesting tasks for user GID {} and workspace GID {}...",
+            user_gid, workspace_gid
+        );
 
         model!(TaskModel "tasks" { name: String });
 
@@ -120,7 +124,6 @@ impl Asana {
                 ),
             ]))
             .await?;
-        info!("Received incomplete tasks assigned to user.");
 
         Ok(data
             .into_iter()
