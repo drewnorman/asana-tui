@@ -99,7 +99,7 @@ impl Handler {
                         match state.current_menu() {
                             Menu::Status => (),
                             Menu::Shortcuts => {
-                                state.previous_shortcut();
+                                state.previous_shortcut_index();
                             }
                             Menu::TopList => {
                                 state.previous_top_list_item();
@@ -117,7 +117,7 @@ impl Handler {
                         match state.current_menu() {
                             Menu::Status => (),
                             Menu::Shortcuts => {
-                                state.next_shortcut();
+                                state.next_shortcut_index();
                             }
                             Menu::TopList => {
                                 state.next_top_list_item();
@@ -135,7 +135,7 @@ impl Handler {
                         match state.current_menu() {
                             Menu::Status => (),
                             Menu::Shortcuts => {
-                                state.select_current_shortcut();
+                                state.select_current_shortcut_index();
                             }
                             Menu::TopList => {
                                 state.select_current_top_list_item();
