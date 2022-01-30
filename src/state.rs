@@ -30,6 +30,7 @@ pub enum View {
     MyTasks,
     RecentlyModified,
     RecentlyCompleted,
+    ProjectTasks,
 }
 
 /// Specifying the different shortcuts.
@@ -57,6 +58,7 @@ pub struct State {
     view_stack: Vec<View>,
     tasks: Vec<Task>,
     projects: Vec<Project>,
+    project: Option<Project>,
 }
 
 /// Defines default application state.
@@ -77,6 +79,7 @@ impl Default for State {
             view_stack: vec![View::Welcome],
             tasks: vec![],
             projects: vec![],
+            project: None,
         }
     }
 }
@@ -239,9 +242,11 @@ impl State {
                 self.view_stack.push(View::MyTasks);
             }
             Shortcut::RecentlyModified => {
+                self.tasks.clear();
                 self.view_stack.push(View::RecentlyModified);
             }
             Shortcut::RecentlyCompleted => {
+                self.tasks.clear();
                 self.view_stack.push(View::RecentlyCompleted);
             }
         }
@@ -276,6 +281,21 @@ impl State {
         &self.current_top_list_item
     }
 
+    /// Select the current top list item.
+    ///
+    pub fn select_current_top_list_item(&mut self) -> &mut Self {
+        if self.projects.len() == 0 {
+            return self;
+        }
+        self.project = Some(self.projects[self.current_top_list_item].to_owned());
+        self.view_stack.clear();
+        self.tasks.clear();
+        self.dispatch(NetworkEvent::ProjectTasks);
+        self.view_stack.push(View::ProjectTasks);
+        self.focus_view();
+        self
+    }
+
     /// Return the current view.
     ///
     pub fn current_view(&self) -> &View {
@@ -306,6 +326,12 @@ impl State {
     pub fn set_projects(&mut self, projects: Vec<Project>) -> &mut Self {
         self.projects = projects;
         self
+    }
+
+    /// Return the current project.
+    ///
+    pub fn get_project(&self) -> Option<&Project> {
+        self.project.as_ref()
     }
 
     /// Dispatches an asynchronous network event.

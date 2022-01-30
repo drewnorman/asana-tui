@@ -92,7 +92,6 @@ impl App {
         terminal.hide_cursor()?;
 
         net_sender.send(NetworkEvent::Me)?;
-        net_sender.send(NetworkEvent::Projects)?;
 
         let terminal_event_handler = TerminalEventHandler::new();
         loop {

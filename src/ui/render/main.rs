@@ -23,6 +23,9 @@ pub fn main(frame: &mut Frame, size: Rect, state: &State) {
         View::RecentlyCompleted => {
             recently_completed(frame, size, state);
         }
+        View::ProjectTasks => {
+            project_tasks(frame, size, state);
+        }
     }
 }
 
@@ -45,6 +48,16 @@ fn recently_modified(frame: &mut Frame, size: Rect, state: &State) {
 
 fn recently_completed(frame: &mut Frame, size: Rect, state: &State) {
     let block = view_block("Recently Completed", state);
+    let list = task_list(state).block(block);
+    frame.render_widget(list, size);
+}
+
+fn project_tasks(frame: &mut Frame, size: Rect, state: &State) {
+    let title = match state.get_project() {
+        Some(project) => &project.name,
+        None => "Project",
+    };
+    let block = view_block(title, state);
     let list = task_list(state).block(block);
     frame.render_widget(list, size);
 }

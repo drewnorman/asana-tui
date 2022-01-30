@@ -137,7 +137,9 @@ impl Handler {
                             Menu::Shortcuts => {
                                 state.select_current_shortcut();
                             }
-                            Menu::TopList => (),
+                            Menu::TopList => {
+                                state.select_current_top_list_item();
+                            }
                         }
                     }
                     Focus::View => {}
