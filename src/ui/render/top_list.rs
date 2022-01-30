@@ -38,7 +38,7 @@ pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
         .enumerate()
         .map(|(i, p)| {
             let span;
-            if i == *state.current_top_list_item() {
+            if i == *state.current_top_list_index() {
                 span = Span::styled(p.name.to_owned(), list_item_style);
             } else {
                 span = Span::raw(p.name.to_owned());
