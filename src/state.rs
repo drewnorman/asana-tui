@@ -198,6 +198,14 @@ impl State {
         self
     }
 
+    /// Activate the status menu.
+    ///
+    pub fn select_status_menu(&mut self) -> &mut Self {
+        self.view_stack.clear();
+        self.view_stack.push(View::Welcome);
+        self
+    }
+
     /// Return the current shortcut.
     ///
     pub fn current_shortcut_index(&self) -> &usize {
@@ -498,6 +506,16 @@ mod tests {
         assert_eq!(state.current_menu, Menu::Shortcuts);
         state.previous_menu();
         assert_eq!(state.current_menu, Menu::Status);
+    }
+
+    #[test]
+    fn select_status_menu() {
+        let mut state = State {
+            view_stack: vec![View::MyTasks],
+            ..State::default()
+        };
+        state.select_status_menu();
+        assert_eq!(*state.view_stack.last().unwrap(), View::Welcome);
     }
 
     #[test]

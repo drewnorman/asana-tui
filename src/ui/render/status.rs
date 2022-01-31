@@ -1,6 +1,6 @@
 use super::widgets::spinner;
 use super::Frame;
-use crate::state::{Menu, State};
+use crate::state::{Focus, Menu, State};
 use crate::ui::widgets::styling;
 use tui::{
     layout::Rect,
@@ -14,7 +14,7 @@ const BLOCK_TITLE: &str = "Status";
 ///
 pub fn status(frame: &mut Frame, size: Rect, state: &State) {
     let mut block = Block::default().title(BLOCK_TITLE).borders(Borders::ALL);
-    if *state.current_menu() == Menu::Status {
+    if *state.current_focus() == Focus::Menu && *state.current_menu() == Menu::Status {
         block = block
             .border_style(styling::active_block_border_style())
             .title(Span::styled(
