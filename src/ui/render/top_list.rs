@@ -13,7 +13,11 @@ const BLOCK_TITLE: &str = "Projects";
 /// Render top list widget according to state.
 ///
 pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
-    let mut block = Block::default().title(BLOCK_TITLE).borders(Borders::ALL);
+    let mut block = Block::default()
+        .title(BLOCK_TITLE)
+        .borders(Borders::ALL)
+        .border_style(styling::normal_block_border_style());
+
     let list_item_style;
     if *state.current_focus() == Focus::Menu && *state.current_menu() == Menu::TopList {
         list_item_style = styling::active_list_item_style();
@@ -47,7 +51,7 @@ pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
         })
         .collect();
     let list = Paragraph::new(items)
-        .style(styling::normal_list_item_style())
+        .style(styling::normal_text_style())
         .block(block);
     frame.render_widget(list, size);
 }

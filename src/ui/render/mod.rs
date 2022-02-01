@@ -5,6 +5,7 @@ mod main;
 mod shortcuts;
 mod status;
 mod top_list;
+mod welcome;
 
 use self::log::log;
 use super::*;

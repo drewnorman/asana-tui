@@ -1,10 +1,11 @@
+use super::welcome::{BANNER, CONTENT};
 use super::widgets::spinner;
 use super::Frame;
 use crate::state::{Focus, State, View};
 use crate::ui::widgets::styling;
 use tui::{
-    layout::Rect,
-    text::{Span, Spans},
+    layout::{Constraint, Direction, Layout, Rect},
+    text::{Span, Spans, Text},
     widgets::{Block, Borders, Paragraph},
 };
 
@@ -31,8 +32,24 @@ pub fn main(frame: &mut Frame, size: Rect, state: &State) {
 }
 
 fn welcome(frame: &mut Frame, size: Rect, state: &State) {
+    let rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(6), Constraint::Length(94)].as_ref())
+        .margin(2)
+        .split(size);
+
     let block = view_block("Welcome", state);
     frame.render_widget(block, size);
+
+    let mut banner = Text::from(BANNER);
+    banner.patch_style(styling::banner_style());
+    let banner_widget = Paragraph::new(banner);
+    frame.render_widget(banner_widget, rows[0]);
+
+    let mut content = Text::from(CONTENT);
+    content.patch_style(styling::normal_text_style());
+    let content_widget = Paragraph::new(content);
+    frame.render_widget(content_widget, rows[1]);
 }
 
 fn my_tasks(frame: &mut Frame, size: Rect, state: &State) {
@@ -72,14 +89,16 @@ fn task_list(state: &State, size: Rect) -> Paragraph {
         .iter()
         .map(|t| Spans::from(vec![Span::raw(t.name.to_owned())]))
         .collect();
-    let list = Paragraph::new(items).style(styling::normal_list_item_style());
+    let list = Paragraph::new(items).style(styling::normal_text_style());
     list
 }
 
 fn view_block<'a>(title: &'a str, state: &State) -> Block<'a> {
-    let mut block = Block::default().borders(Borders::ALL);
-    if *state.current_focus() == Focus::View {
-        block = block.border_style(styling::active_block_border_style());
-    }
-    block.title(Span::styled(title, styling::active_block_title_style()))
+    Block::default()
+        .borders(Borders::ALL)
+        .border_style(match *state.current_focus() {
+            Focus::View => styling::active_block_border_style(),
+            _ => styling::normal_block_border_style(),
+        })
+        .title(Span::styled(title, styling::active_block_title_style()))
 }

@@ -133,7 +133,9 @@ impl Handler {
                     Focus::Menu => {
                         debug!("Processing select menu item event '{:?}'...", event);
                         match state.current_menu() {
-                            Menu::Status => (),
+                            Menu::Status => {
+                                state.select_status_menu();
+                            }
                             Menu::Shortcuts => {
                                 state.select_current_shortcut_index();
                             }
