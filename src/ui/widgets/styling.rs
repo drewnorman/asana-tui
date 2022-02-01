@@ -7,6 +7,12 @@ pub fn active_block_border_style() -> Style {
     Style::default().fg(PURPLE)
 }
 
+/// Return the border style for normal blocks.
+///
+pub fn normal_block_border_style() -> Style {
+    Style::default().fg(Color::White)
+}
+
 /// Return the title style for active blocks.
 ///
 pub fn active_block_title_style() -> Style {

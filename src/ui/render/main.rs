@@ -94,9 +94,11 @@ fn task_list(state: &State, size: Rect) -> Paragraph {
 }
 
 fn view_block<'a>(title: &'a str, state: &State) -> Block<'a> {
-    let mut block = Block::default().borders(Borders::ALL);
-    if *state.current_focus() == Focus::View {
-        block = block.border_style(styling::active_block_border_style());
-    }
-    block.title(Span::styled(title, styling::active_block_title_style()))
+    Block::default()
+        .borders(Borders::ALL)
+        .border_style(match *state.current_focus() {
+            Focus::View => styling::active_block_border_style(),
+            _ => styling::normal_block_border_style(),
+        })
+        .title(Span::styled(title, styling::active_block_title_style()))
 }

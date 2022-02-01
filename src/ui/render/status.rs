@@ -13,7 +13,11 @@ const BLOCK_TITLE: &str = "Status";
 /// Render status widget according to state.
 ///
 pub fn status(frame: &mut Frame, size: Rect, state: &State) {
-    let mut block = Block::default().title(BLOCK_TITLE).borders(Borders::ALL);
+    let mut block = Block::default()
+        .title(BLOCK_TITLE)
+        .borders(Borders::ALL)
+        .border_style(styling::normal_block_border_style());
+
     if *state.current_focus() == Focus::Menu && *state.current_menu() == Menu::Status {
         block = block
             .border_style(styling::active_block_border_style())
@@ -31,9 +35,18 @@ pub fn status(frame: &mut Frame, size: Rect, state: &State) {
     let user = state.get_user().unwrap();
     let workspace = state.get_active_workspace().unwrap();
     let text = vec![
-        Spans::from(vec![Span::raw(format!("User: {}", &user.name))]),
-        Spans::from(vec![Span::raw(format!("Email: {}", &user.email))]),
-        Spans::from(vec![Span::raw("Workspace: "), Span::raw(&workspace.name)]),
+        Spans::from(vec![Span::styled(
+            format!("User: {}", &user.name),
+            styling::normal_text_style(),
+        )]),
+        Spans::from(vec![Span::styled(
+            format!("Email: {}", &user.email),
+            styling::normal_text_style(),
+        )]),
+        Spans::from(vec![Span::styled(
+            format!("Workspace: {}", &workspace.name),
+            styling::normal_text_style(),
+        )]),
     ];
     let paragraph = Paragraph::new(text).block(block);
 
