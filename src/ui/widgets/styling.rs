@@ -16,7 +16,9 @@ pub fn active_block_title_style() -> Style {
 /// Return the style for current list items.
 ///
 pub fn current_list_item_style() -> Style {
-    Style::default().add_modifier(Modifier::BOLD)
+    Style::default()
+        .fg(Color::White)
+        .add_modifier(Modifier::BOLD)
 }
 
 /// Return the style for active list items.
