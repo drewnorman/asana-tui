@@ -47,7 +47,7 @@ pub fn top_list(frame: &mut Frame, size: Rect, state: &State) {
         })
         .collect();
     let list = Paragraph::new(items)
-        .style(styling::normal_list_item_style())
+        .style(styling::normal_text_style())
         .block(block);
     frame.render_widget(list, size);
 }

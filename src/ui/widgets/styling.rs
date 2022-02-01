@@ -25,8 +25,14 @@ pub fn active_list_item_style() -> Style {
     current_list_item_style().fg(PURPLE)
 }
 
-/// Return the style for normal list items.
+/// Return the style for normal text.
 ///
-pub fn normal_list_item_style() -> Style {
+pub fn normal_text_style() -> Style {
     Style::default().fg(Color::White)
+}
+
+/// Return the style for the banner.
+///
+pub fn banner_style() -> Style {
+    Style::default().fg(PINK)
 }
