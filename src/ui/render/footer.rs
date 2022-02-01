@@ -1,7 +1,8 @@
 use super::Frame;
+use crate::ui::color::*;
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::Style,
     text::{Span, Spans},
     widgets::Paragraph,
 };
@@ -11,13 +12,13 @@ use tui::{
 pub fn footer(frame: &mut Frame, size: Rect) {
     let controls_content = Spans::from(vec![Span::styled(
         "j k h l: navigate, enter: select, esc: cancel, q: quit",
-        Style::default().fg(Color::Blue),
+        Style::default().fg(YELLOW),
     )]);
     let controls_widget = Paragraph::new(controls_content).alignment(Alignment::Left);
 
     let version_content = Spans::from(vec![Span::styled(
         format!(" {}", env!("CARGO_PKG_VERSION")),
-        Style::default().fg(Color::Green),
+        Style::default().fg(GREEN),
     )]);
     let version_content_width = version_content.width();
     let version_widget = Paragraph::new(version_content).alignment(Alignment::Right);
