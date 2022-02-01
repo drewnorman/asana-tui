@@ -1,4 +1,5 @@
 use super::Frame;
+use crate::ui::color::*;
 use tui::{
     layout::Rect,
     style::{Color, Style},
@@ -11,11 +12,11 @@ use tui_logger::TuiLoggerWidget;
 pub fn log(frame: &mut Frame, size: Rect) {
     let log_widget: TuiLoggerWidget = TuiLoggerWidget::default()
         .block(Block::default().title("Log").borders(Borders::ALL))
-        .style_error(Style::default().fg(Color::Red))
-        .style_warn(Style::default().fg(Color::Yellow))
-        .style_info(Style::default().fg(Color::Cyan))
-        .style_debug(Style::default().fg(Color::Green))
-        .style_trace(Style::default().fg(Color::Magenta))
+        .style_error(Style::default().fg(PINK))
+        .style_warn(Style::default().fg(YELLOW))
+        .style_info(Style::default().fg(BLUE))
+        .style_debug(Style::default().fg(GREEN))
+        .style_trace(Style::default().fg(PURPLE))
         .output_separator(' ')
         .output_timestamp(Some("%F %H:%M:%S%.3f".to_string()))
         .output_level(None)
